@@ -683,7 +683,7 @@ class MainWP_Connect { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         if ( is_user_logged_in() && ! MainWP_Helper::is_admin() ) {
-            do_action( 'wp_logout' );
+            $this->destroy_user_session();
         }
 
         $signature = rawurldecode( isset( $_REQUEST['mainwpsignature'] ) ? wp_unslash( $_REQUEST['mainwpsignature'] ) : '' ); //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -713,7 +713,7 @@ class MainWP_Connect { //phpcs:ignore -- NOSONAR - multi methods.
             // it is connected admin login.
             if ( ! MainWP_Helper::is_admin() && ! $alter_login_required ) {
                 // log out if connected admin is not admin level 10.
-                do_action( 'wp_logout' );
+                $this->destroy_user_session();
 
                 return false;
             }
@@ -1068,7 +1068,7 @@ class MainWP_Connect { //phpcs:ignore -- NOSONAR - multi methods.
                 $this->check_compatible_connect_info();
                 return true;
             }
-            do_action( 'wp_logout' );
+            $this->destroy_user_session();
         }
 
         $user = get_user_by( 'login', $username );
@@ -1181,5 +1181,10 @@ class MainWP_Connect { //phpcs:ignore -- NOSONAR - multi methods.
                 MainWP_Helper::update_option( 'mainwp_child_connected_admin', $con_username, 'yes' );
             }
         }
+    }
+
+    private function destroy_user_session() {
+        wp_destroy_current_session();
+        wp_clear_auth_cookie();
     }
 }
