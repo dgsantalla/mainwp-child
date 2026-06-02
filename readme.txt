@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 6.1.1-er.1
+Stable tag: 6.1.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -111,9 +111,9 @@ We have an extensive FAQ with more questions and answers [here](https://mainwp.c
 
 == Changelog ==
 
-= 6.1.1 =
+= 6.1.1 - 6-2-2026 =
 
-* Updated: Improved session cleanup when authentication failures occur to ensure proper logout behavior.
+* Updated: Improved session cleanup when authentication failures occur to ensure proper logout behavior. [(Pull Request by Sixela)](https://github.com/sixela)
 * Updated: Improved premium theme and plugin update detection to prevent system hangs caused by slow or unreachable servers. [(Pull Request by Contributolo)](https://github.com/Contributolo)
 
 = 6.1 - 5-26-2026 =
