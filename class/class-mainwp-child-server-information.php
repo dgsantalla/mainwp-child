@@ -1248,7 +1248,24 @@ class MainWP_Child_Server_Information extends MainWP_Child_Server_Information_Ba
          */
         global $current_user;
 
-        $uniqueId = MainWP_Helper::get_site_unique_id();
+        $uniqueId                  = MainWP_Helper::get_site_unique_id();
+        $enable_pwd_auth_connect   = get_user_option( 'mainwp_child_user_enable_passwd_auth_connect', $current_user->ID );
+        $is_pwd_auth_disabled      = false !== $enable_pwd_auth_connect && '1' !== (string) $enable_pwd_auth_connect;
+        $unique_id_value           = ! empty( $uniqueId ) ? $uniqueId : esc_html__( 'Leave the field blank', 'mainwp-child' );
+        $unique_id_description     = esc_html__( 'Unique Security ID is optional while Password Authentication is enabled. Leave this field blank unless you enable Unique Security ID in Connection Security Settings.', 'mainwp-child' );
+
+        if ( $is_pwd_auth_disabled && empty( $uniqueId ) ) {
+            $unique_id_value = esc_html__( 'Save settings to generate', 'mainwp-child' );
+            // translators: %s: Whitelabeled name.
+            $unique_id_description = sprintf( esc_html__( 'Password Authentication is disabled, so a Unique Security ID is required. Save Connection Security Settings to generate one before adding this site to your %s Dashboard.', 'mainwp-child' ), stripslashes( $branding_title ) );
+        } elseif ( $is_pwd_auth_disabled ) {
+            // translators: %s: Whitelabeled name.
+            $unique_id_description = sprintf( esc_html__( 'Password Authentication is disabled, so this Unique Security ID is required when adding this site to your %s Dashboard.', 'mainwp-child' ), stripslashes( $branding_title ) );
+        } elseif ( ! empty( $uniqueId ) ) {
+            // translators: %s: Whitelabeled name.
+            $unique_id_description = sprintf( esc_html__( 'Unique Security ID is enabled. Add this value to your %s Dashboard when connecting this site.', 'mainwp-child' ), stripslashes( $branding_title ) );
+        }
+
         $details  = array(
             'siteurl'       => array(
                 'title' => esc_html__( 'Site URL', 'mainwp-child' ),
@@ -1267,9 +1284,8 @@ class MainWP_Child_Server_Information extends MainWP_Child_Server_Information_Ba
             ),
             'uniqueid'      => array(
                 'title' => esc_html__( 'Child unique security id', 'mainwp-child' ),
-                'value' => ! empty( $uniqueId ) ? $uniqueId : esc_html__( 'Leave the field blank', 'mainwp-child' ),
-                // translators: %s: Whitelabeled name.
-                'desc'  => sprintf( esc_html__( 'Child unique security id is not required, however, since you have enabled it, you need to add it to your %s dashboard.', 'mainwp-child' ), stripslashes( $branding_title ) ),
+                'value' => $unique_id_value,
+                'desc'  => $unique_id_description,
             ),
             'verify_ssl'    => array(
                 'title' => esc_html__( 'Verify certificate', 'mainwp-child' ),
