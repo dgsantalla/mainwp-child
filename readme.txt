@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 6.1.2-er.1
+Stable tag: 6.1.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -111,9 +111,13 @@ We have an extensive FAQ with more questions and answers [here](https://mainwp.c
 
 == Changelog ==
 
-= 6.1.1 =
+= 6.1.2 - 6-16-2026 =
 
-* Updated: Improved session cleanup when authentication failures occur to ensure proper logout behavior.
+* Updated: Hardened MainWP Child connection verification and settings behavior for passwordless setups. If Password Authentication is disabled, adding or reconnecting a site now requires the Unique Security ID, including when using the MainWP REST API or other automations. Thanks to Khaled Alenazi (Nxploited).
+
+= 6.1.1 - 6-2-2026 =
+
+* Updated: Improved session cleanup when authentication failures occur to ensure proper logout behavior. [(Pull Request by Sixela)](https://github.com/sixela)
 * Updated: Improved premium theme and plugin update detection to prevent system hangs caused by slow or unreachable servers. [(Pull Request by Contributolo)](https://github.com/Contributolo)
 
 = 6.1 - 5-26-2026 =
