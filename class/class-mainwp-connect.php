@@ -129,17 +129,24 @@ class MainWP_Connect { //phpcs:ignore -- NOSONAR - multi methods.
         if ( ! empty( $_POST['user'] ) && ! $this->is_verified_register( wp_unslash( $_POST['user'] ) ) ) {
             if ( isset( $_POST['regverify'] ) && empty( $_POST['userpwd'] ) ) { // without passwd, it is not force reconnect.
                 MainWP_Helper::instance()->error( esc_html__( 'Failed to reconnect to the site. Please remove the site and add it again.', 'mainwp-child' ), 'reconnect_failed' );
+            } elseif ( ! $this->is_enabled_user_passwd_auth( wp_unslash( $_POST['user'] ) ) ) {
+                MainWP_Helper::instance()->error( esc_html__( 'Unable to connect to the site. Password Authentication is disabled, so please verify that the Unique Security ID is correct and try again.', 'mainwp-child' ), 'REG_ERROR7' );
             } else {
                 MainWP_Helper::instance()->error( esc_html__( 'Unable to connect to the site. Please verify that your Admin Username and Password are correct and try again.', 'mainwp-child' ), 'REG_ERROR7' );
             }
         }
 
         // Check if the user exists and if yes, check if it's administartor user.
-        if ( empty( $_POST['user'] ) || ! $this->login( wp_unslash( $_POST['user'] ) ) ) {
+        $register_user_name = ! empty( $_POST['user'] ) ? wp_unslash( $_POST['user'] ) : '';
+        $register_user      = get_user_by( 'login', $register_user_name );
+        if ( ! $register_user ) {
             MainWP_Helper::instance()->error( esc_html__( 'Administrator user does not exist. Please verify that the user is an existing administrator.', 'mainwp-child' ), 'REG_ERROR8' );
         }
-        if ( ! MainWP_Helper::is_admin() ) {
+        if ( ! MainWP_Helper::is_admin( $register_user ) ) {
             MainWP_Helper::instance()->error( esc_html__( 'User is not an administrator. Please use an administrator user to establish the connection.', 'mainwp-child' ), 'REG_ERROR9' );
+        }
+        if ( ! $this->login( $register_user->user_login ) ) {
+            MainWP_Helper::instance()->error( esc_html__( 'Administrator user does not exist. Please verify that the user is an existing administrator.', 'mainwp-child' ), 'REG_ERROR8' );
         }
 
         // Update the mainwp_child_pubkey option.
@@ -257,7 +264,26 @@ class MainWP_Connect { //phpcs:ignore -- NOSONAR - multi methods.
     public function is_verified_register( $user_name ) { // phpcs:ignore -- NOSONAR - Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         if ( ! $this->is_enabled_user_passwd_auth( $user_name ) ) {
-            return true; // not enable passwd auth, then return true.
+            //phpcs:disable WordPress.Security.NonceVerification
+            $user_pwd   = isset( $_POST['userpwd'] ) ? trim( rawurldecode( $_POST['userpwd'] ) ) : ''; //phpcs:ignore -- NOSONAR - ok.
+            $reg_verify = isset( $_POST['regverify'] ) ? sanitize_text_field( wp_unslash( $_POST['regverify'] ) ) : ''; //phpcs:ignore -- NOSONAR - ok.
+            $unique_id  = MainWP_Helper::get_site_unique_id();
+            $posted_id  = isset( $_POST['uniqueId'] ) && ! is_array( $_POST['uniqueId'] ) ? wp_unslash( $_POST['uniqueId'] ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Compared only.
+
+            if ( ! empty( $user_pwd ) ) {
+                return $this->is_valid_user_pwd( $user_name, $user_pwd ) ? true : false;
+            }
+
+            if ( ! empty( $reg_verify ) && $this->validate_register( $reg_verify, 'verify', $user_name ) ) {
+                return true;
+            }
+
+            if ( '' !== $unique_id && hash_equals( $unique_id, $posted_id ) ) {
+                return true;
+            }
+            //phpcs:enable WordPress.Security.NonceVerification
+
+            return false;
         }
 
         //phpcs:disable WordPress.Security.NonceVerification

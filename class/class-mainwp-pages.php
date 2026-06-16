@@ -166,13 +166,17 @@ class MainWP_Pages {
 
         // phpcs:disable WordPress.Security.NonceVerification
         if ( isset( $_POST['submit'] ) && isset( $_POST['nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'child-settings' ) ) {
-            if ( isset( $_POST['requireUniqueSecurityId'] ) ) {
-                MainWP_Helper::update_option( 'mainwp_child_uniqueId', MainWP_Helper::rand_string( 12 ) );
+            $enable_pwd_auth_connect    = ! empty( $_POST['mainwp_child_user_enable_pwd_auth_connect'] );
+            $require_unique_security_id = isset( $_POST['requireUniqueSecurityId'] ) || ! $enable_pwd_auth_connect;
+            $current_unique_security_id = MainWP_Helper::get_site_unique_id();
+
+            if ( $require_unique_security_id ) {
+                MainWP_Helper::update_option( 'mainwp_child_uniqueId', '' !== $current_unique_security_id ? $current_unique_security_id : MainWP_Helper::rand_string( 12 ) );
             } else {
                 MainWP_Helper::update_option( 'mainwp_child_uniqueId', '' );
             }
             MainWP_Helper::update_option( 'mainwp_child_ttl_active_unconnected_site', ! empty( $_POST['mainwp_child_active_time_for_unconnected_site'] ) ? intval( $_POST['mainwp_child_active_time_for_unconnected_site'] ) : 0 );
-            update_user_option( get_current_user_id(), 'mainwp_child_user_enable_passwd_auth_connect', ! empty( $_POST['mainwp_child_user_enable_pwd_auth_connect'] ) ? 1 : 0 );
+            update_user_option( get_current_user_id(), 'mainwp_child_user_enable_passwd_auth_connect', $enable_pwd_auth_connect ? 1 : 0 );
             wp_safe_redirect( 'options-general.php?page=mainwp_child_tab&message=2' );
         }
         // phpcs:enable
@@ -683,6 +687,8 @@ class MainWP_Pages {
             update_user_option( get_current_user_id(), 'mainwp_child_user_enable_passwd_auth_connect', 1 );
         }
 
+        $force_unique_security_id = ! $enable_pwd_auth_connect;
+
         ?>
         <h2 style="font-size:1.5em"><?php esc_html_e( 'Connection Security Settings', 'mainwp-child' ); ?></h2>
         <p><?php esc_html_e( 'Configure the plugin to best suit your security and connection needs.', 'mainwp-child' ); ?></p>
@@ -704,7 +710,7 @@ class MainWP_Pages {
             printf( esc_html__( 'For further security, we recommend creating a dedicated admin account specifically for %1$s. This \'%2$s Admin\' account can be used exclusively by %3$s, allowing you to easily track any actions performed by the plugin. To set this up, go to Users to create the account, then return to your Dashboard to connect it.', 'mainwp-child' ), esc_html( $branding_title ), esc_html( $branding_title ), esc_html( $branding_title ) );
             ?></p>
             <h4><strong><?php esc_html_e( 'Disabling Password Security', 'mainwp-child' ); ?></strong></h4>
-            <p><?php esc_html_e( 'If you prefer not to use password security, you can disable it by unchecking the box below. Make sure this child site is ready to connect before turning off this feature.', 'mainwp-child' ); ?></p>
+            <p><?php esc_html_e( 'If you prefer not to use password security, you can disable it by unchecking the box below. When password authentication is disabled, Unique Security ID is required for passwordless initial connections.', 'mainwp-child' ); ?></p>
             <p>
             <?php
             if ( MainWP_Child_Branding::instance()->is_branding() ) {
@@ -722,7 +728,7 @@ class MainWP_Pages {
                         <th scope="row" style="width:300px"><?php esc_html_e( 'Require Password Authentication', 'mainwp-child' ); ?></th>
                         <td>
                         <label for="mainwp_child_user_enable_pwd_auth_connect" class="mainwp-toggle">
-                            <input type="checkbox" name="mainwp_child_user_enable_pwd_auth_connect" id="mainwp_child_user_enable_pwd_auth_connect" value="1" <?php echo $enable_pwd_auth_connect ? 'checked' : ''; ?> />
+                            <input type="checkbox" name="mainwp_child_user_enable_pwd_auth_connect" id="mainwp_child_user_enable_pwd_auth_connect" value="1" <?php checked( $enable_pwd_auth_connect ); ?> />
                             <span class="mainwp-slider"></span>
                         </label><?php esc_html_e( 'Enable this option to require password authentication on initial site connection.', 'mainwp-child' ); ?>
                         </td>
@@ -745,9 +751,15 @@ class MainWP_Pages {
                         <th scope="row" style="width:300px"><?php esc_html_e( 'Require Unique Security ID', 'mainwp-child' ); ?></th>
                         <td>
                             <label for="requireUniqueSecurityId" class="mainwp-toggle">
-                                <input name="requireUniqueSecurityId" type="checkbox" id="requireUniqueSecurityId" <?php echo ( ! empty( $uniqueId ) ) ? 'checked' : ''; ?> />
+                                <input name="requireUniqueSecurityId" type="checkbox" id="requireUniqueSecurityId" <?php checked( ! empty( $uniqueId ) || $force_unique_security_id ); ?> <?php disabled( $force_unique_security_id ); ?> />
                                 <span class="mainwp-slider"></span>
                             </label><?php esc_html_e( 'Enable this option for an added layer of protection when connecting this site.', 'mainwp-child' ); ?>
+                            <p id="mainwp-child-unique-security-id-required" class="description" <?php echo $force_unique_security_id ? '' : 'style="display:none"'; ?>>
+                                <?php esc_html_e( 'Unique Security ID is required when Password Authentication is disabled.', 'mainwp-child' ); ?>
+                            </p>
+                            <p id="mainwp-child-unique-security-id-generate" class="description" <?php echo $force_unique_security_id && empty( $uniqueId ) ? '' : 'style="display:none"'; ?>>
+                                <?php esc_html_e( 'Save settings to generate the Unique Security ID before connecting without password authentication.', 'mainwp-child' ); ?>
+                            </p>
                         </td>
                     <tr>
                 </tbody>
@@ -789,6 +801,35 @@ class MainWP_Pages {
             </p>
             <input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'child-settings' ) ); ?>">
         </form>
+        <script type="text/javascript">
+            jQuery( document ).ready( function( $ ) {
+                var $passwordAuth = $( '#mainwp_child_user_enable_pwd_auth_connect' );
+                var $uniqueId = $( '#requireUniqueSecurityId' );
+                var $uniqueIdRequired = $( '#mainwp-child-unique-security-id-required' );
+                var $uniqueIdGenerate = $( '#mainwp-child-unique-security-id-generate' );
+                var uniqueIdExists = <?php echo wp_json_encode( ! empty( $uniqueId ) ); ?>;
+
+                function mainwpChildSyncConnectionSecurityFields() {
+                    if ( ! $passwordAuth.is( ':checked' ) ) {
+                        $uniqueId.prop( 'checked', true ).prop( 'disabled', true );
+                        $uniqueIdRequired.show();
+                    } else {
+                        $uniqueId.prop( 'disabled', false );
+                        $uniqueIdRequired.hide();
+                    }
+
+                    if ( ! uniqueIdExists && $uniqueId.is( ':checked' ) ) {
+                        $uniqueIdGenerate.show();
+                    } else {
+                        $uniqueIdGenerate.hide();
+                    }
+                }
+
+                $passwordAuth.on( 'change', mainwpChildSyncConnectionSecurityFields );
+                $uniqueId.on( 'change', mainwpChildSyncConnectionSecurityFields );
+                mainwpChildSyncConnectionSecurityFields();
+            } );
+        </script>
         <br/>
         <header class="section-header">
             <h3><?php esc_html_e( 'Site Connection Management', 'mainwp-child' ); ?></h3>
