@@ -95,6 +95,10 @@ Please follow the steps outlined in the [MainWP Feature Requests](https://voice.
 = Where can I find more information about MainWP? =
 We have an extensive FAQ with more questions and answers [here](https://mainwp.com/preinstall-faq/).
 
+= Where do I report security bugs found in this plugin? =
+
+Please report security bugs found in the source code of the MainWP Child plugin through the [Patchstack Vulnerability Disclosure Program](https://patchstack.com/database/vdp/9e5fb39d-412a-44d4-8639-39c3db443381). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
+
 == Screenshots ==
 
 1. Sites - Operations
