@@ -79,6 +79,13 @@ class MainWP_Child_Staging { //phpcs:ignore -- NOSONAR - multi methods.
     public $assets = null;
 
     /**
+     * Public plugin file variable.
+     *
+     * @var string plugin file path.
+     */
+    public static $plugin_file = '';
+
+    /**
      * Create a public static instance of MainWP_Child_Staging.
      *
      * @return MainWP_Child_Staging|null
@@ -97,8 +104,13 @@ class MainWP_Child_Staging { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public function __construct() {
         require_once ABSPATH . 'wp-admin/includes/plugin.php'; // NOSONAR - WP compatible.
-        if ( ( is_plugin_active( $this->the_plugin_slug ) && defined( 'WPSTG_PLUGIN_DIR' ) ) || is_plugin_active( $this->the_plugin_slug_pro ) ) {
+
+        if ( is_plugin_active( $this->the_plugin_slug ) ) {
             $this->is_plugin_installed = true;
+            static::$plugin_file       = trailingslashit( WP_PLUGIN_DIR ) . $this->the_plugin_slug;
+        } elseif ( is_plugin_active( $this->the_plugin_slug_pro ) ) {
+            $this->is_plugin_installed = true;
+            static::$plugin_file       = trailingslashit( WP_PLUGIN_DIR ) . $this->the_plugin_slug_pro;
         }
 
         if ( ! $this->is_plugin_installed ) {
@@ -189,6 +201,29 @@ class MainWP_Child_Staging { //phpcs:ignore -- NOSONAR - multi methods.
     public function action() { // phpcs:ignore -- NOSONAR - ignore complex method notice.
         if ( ! $this->is_plugin_installed ) {
             MainWP_Helper::write( array( 'error' => esc_html__( 'Please install WP Staging plugin on child website', 'mainwp-child' ) ) );
+        }
+
+        $loaded_success = true;
+
+        if ( ! defined( 'WPSTG_PLUGIN_DIR' ) ) {
+            include_once static::$plugin_file; // requires.
+            global $pluginFilePath; // requires.
+            $plugin_dir = dirname( static::$plugin_file );
+            $files      = array(
+                $plugin_dir . '/runtimeRequirements.php',
+                $plugin_dir . '/bootstrap.php',
+            );
+            foreach ( $files as $file ) {
+                if ( file_exists( $file ) ) {
+                    require_once $file;
+                } else {
+                    $loaded_success = false;
+                }
+            }
+        }
+
+        if ( false === $loaded_success || ! defined( 'WPSTG_PLUGIN_DIR' ) ) {
+            MainWP_Helper::instance()->error( esc_html__( 'WP Staging failed to load correctly on the child website.', 'mainwp-child' ), 'STAG_ERROR_NOT_LOADED' );
         }
 
         if ( ! class_exists( '\WPStaging\WPStaging' ) && ! class_exists( '\WPStaging\Core\WPStaging' ) ) {
