@@ -994,9 +994,10 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
         $website_id = isset( $_POST['settings']['website_id'] ) ? sanitize_text_field( wp_unslash( $_POST['settings']['website_id'] ) ) : ''; // phpcs:ignore -- NOSONAR
         $this->wp_list_table_dependency();  // phpcs:ignore -- NOSONAR
 
-        $array      = array();
-        $is_global = isset( $_POST['settings']['is_global'] ) ? intval( wp_unslash( $_POST['settings']['is_global'] ) ) : 0;  // phpcs:ignore -- NOSONAR
-        $global_ids = $this->get_all_global_backwpup_job_ids();
+        $array       = array();
+        $is_global   = isset( $_POST['settings']['is_global'] ) ? intval( wp_unslash( $_POST['settings']['is_global'] ) ) : 0;  // phpcs:ignore -- NOSONAR
+        $global_ids  = $this->get_all_global_backwpup_job_ids();
+        $default_ids = $this->get_default_backwpup_job_ids();
 
         switch ( $type ) {
             case 'logs':
@@ -1016,15 +1017,16 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
                 $output->prepare_items();
                 $logs          = array_filter(
                     $output->items,
-                    function ( $log ) use ( $global_ids, $is_global ) {
-                        $temp_job = (bool) \BackWPup_Option::get( $log['jobid'], 'tempjob', false );
-                        if ( $temp_job ) {
+                    function ( $log ) use ( $global_ids, $default_ids, $is_global ) {
+                        $job_id   = intval( $log['jobid'] );
+                        $temp_job = (bool) \BackWPup_Option::get( $job_id, 'tempjob', false );
+                        if ( $temp_job && ! in_array( $job_id, $default_ids, true ) ) {
                             return false;
                         }
                         if ( 0 === $is_global ) {
-                            return in_array( intval( $log['jobid'] ), $global_ids, true );
+                            return in_array( $job_id, $global_ids, true ) || in_array( $job_id, $default_ids, true );
                         }
-                        return ! empty( $log['jobid'] );
+                        return ! empty( $job_id );
                     }
                 );
                 $output->items = $logs ?? array();
@@ -2594,6 +2596,27 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
                 array_merge(
                     array( $backup_files_id, $backup_database_id ),
                     $global_job_ids
+                )
+            )
+        );
+    }
+
+    /**
+     * Method get_default_backwpup_job_ids()
+     * Take the list of BackWPup default job IDs.
+     *
+     * @return array List of default BackWPup job IDs.
+     */
+    protected function get_default_backwpup_job_ids() {
+        return array_unique(
+            array_filter(
+                array_map(
+                    'intval',
+                    array(
+                        get_site_option( 'backwpup_first_backup_job_id' ),
+                        get_site_option( 'backwpup_backup_files_job_id' ),
+                        get_site_option( 'backwpup_backup_database_job_id' ),
+                    )
                 )
             )
         );
