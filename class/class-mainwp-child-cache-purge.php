@@ -183,26 +183,27 @@ class MainWP_Child_Cache_Purge { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         $other_cache_plugins = array(
-            'breeze/breeze.php'                          => 'Breeze',
-            'litespeed-cache/litespeed-cache.php'        => 'LiteSpeed Cache',
-            'sg-cachepress/sg-cachepress.php'            => 'SiteGround Optimizer',
-            'swift-performance-lite/performance.php'     => 'Swift Performance Lite',
-            'swift-performance/performance.php'          => 'Swift Performance',
-            'wp-fastest-cache/wpFastestCache.php'        => 'WP Fastest Cache',
-            'w3-total-cache/w3-total-cache.php'          => 'W3 Total Cache',
-            'hummingbird-performance/wp-hummingbird.php' => 'Hummingbird Performance',
-            'cache-enabler/cache-enabler.php'            => 'Cache Enabler',
-            'nginx-helper/nginx-helper.php'              => 'Nginx Helper',
-            'nitropack/main.php'                         => 'Nitropack',
-            'autoptimize/autoptimize.php'                => 'Autoptimize',
-            'flying-press/flying-press.php'              => 'FlyingPress',
-            'wp-super-cache/wp-cache.php'                => 'WP Super Cache',
-            'comet-cache/comet-cache.php'                => 'Comet Cache',
-            'seraphinite-accelerator/plugin_root.php'    => 'Seraphinite Accelerator',
-            'swis-performance/swis-performance.php'      => 'Swis Performance',
+            'breeze/breeze.php'                           => 'Breeze',
+            'litespeed-cache/litespeed-cache.php'         => 'LiteSpeed Cache',
+            'sg-cachepress/sg-cachepress.php'             => 'SiteGround Optimizer',
+            'swift-performance-lite/performance.php'      => 'Swift Performance Lite',
+            'swift-performance/performance.php'           => 'Swift Performance',
+            'wp-fastest-cache/wpFastestCache.php'         => 'WP Fastest Cache',
+            'w3-total-cache/w3-total-cache.php'           => 'W3 Total Cache',
+            'hummingbird-performance/wp-hummingbird.php'  => 'Hummingbird Performance',
+            'cache-enabler/cache-enabler.php'             => 'Cache Enabler',
+            'nginx-helper/nginx-helper.php'               => 'Nginx Helper',
+            'nitropack/main.php'                          => 'Nitropack',
+            'autoptimize/autoptimize.php'                 => 'Autoptimize',
+            'flying-press/flying-press.php'               => 'FlyingPress',
+            'wp-super-cache/wp-cache.php'                 => 'WP Super Cache',
+            'comet-cache/comet-cache.php'                 => 'Comet Cache',
+            'seraphinite-accelerator/plugin_root.php'     => 'Seraphinite Accelerator',
+            'swis-performance/swis-performance.php'       => 'Swis Performance',
             'pressable-cache-management/pressable-cache-management.php' => 'Pressable Cache Management',
-            'runcloud-hub/runcloud-hub.php'              => 'RunCloud Hub',
-            'clsop/clsop.php'                            => 'AccelerateWP',
+            'runcloud-hub/runcloud-hub.php'               => 'RunCloud Hub',
+            'clsop/clsop.php'                             => 'AccelerateWP',
+            'fastpixel-website-accelerator/fastpixel.php' => 'FastPixel Website Accelerator',
         );
 
         if ( empty( $cache_plugin_solution ) ) {
@@ -316,6 +317,9 @@ class MainWP_Child_Cache_Purge { //phpcs:ignore -- NOSONAR - multi methods.
                         break;
                     case 'RunCloud Hub':
                         $information = $this->runcloud_hub_auto_purge_cache();
+                        break;
+                    case 'FastPixel Website Accelerator':
+                        $information = $this->fastpixel_cache_auto_purge_cache();
                         break;
                     default:
                         break;
@@ -730,6 +734,30 @@ class MainWP_Child_Cache_Purge { //phpcs:ignore -- NOSONAR - multi methods.
 
             // Clear RunCloud Hub Cache after update.
             \RunCloud_Hub::purge_cache_all();
+
+            // record results.
+            update_option( 'mainwp_cache_control_last_purged', time() );
+
+            return $this->purge_result( $success_message, 'SUCCESS' );
+
+        } else {
+            return $this->purge_result( $error_message, 'ERROR' );
+        }
+    }
+
+    /**
+     * Purge FastPixel Website Accelerator cache.
+     *
+     * @return array Purge results array.
+     */
+    public function fastpixel_cache_auto_purge_cache() {
+
+        $success_message = 'FastPixel Website Accelerator => Cache auto cleared on: (' . current_time( 'mysql' ) . ')';
+        $error_message   = 'FastPixel Website Accelerator => There was an issue purging your cache.';
+
+        if ( class_exists( '\FASTPIXEL\FASTPIXEL_Backend_Cache' ) ) {
+
+            do_action( 'fastpixel/purge/all' ); // phpcs:ignore -- NOSONAR - namespace ok.
 
             // record results.
             update_option( 'mainwp_cache_control_last_purged', time() );
