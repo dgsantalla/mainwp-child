@@ -1092,6 +1092,9 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
                             }
                             if ( ! empty( $items ) ) {
                                 foreach ( $items as $item ) {
+                                    if ( ! is_array( $item ) || ! isset( $item['time'] ) ) {
+                                        continue;
+                                    }
                                     $temp_single_item         = $item;
                                     $temp_single_item['dest'] = $jobid . '_' . $dest;
                                     // translators: 1: date, 2: time.
@@ -1204,7 +1207,7 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public function init_download_backup() {
         $page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';  // phpcs:ignore -- NOSONAR
-        if ( ! empty( $page ) || 'backwpupbackups' !== $page || ! isset( $page ) || empty( $page ) ) {
+        if ( empty( $page ) || 'backwpupbackups' !== $page ) {
             return;
         }
         ?>
