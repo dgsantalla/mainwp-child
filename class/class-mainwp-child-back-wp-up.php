@@ -1098,7 +1098,9 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
                                     $temp_single_item         = $item;
                                     $temp_single_item['dest'] = $jobid . '_' . $dest;
                                     // translators: 1: date, 2: time.
-                                    $temp_single_item['timeloc']   = sprintf( esc_html__( '%1$s at %2$s', 'mainwp-child' ), date_i18n( get_option( 'date_format' ), $temp_single_item['time'], true ), date_i18n( get_option( 'time_format' ), $temp_single_item['time'], true ) );
+                                    // Use the child site's timezone explicitly so Dashboard and BackWPup show the same time.
+                                    $backup_timezone              = wp_timezone();
+                                    $temp_single_item['timeloc']   = sprintf( esc_html__( '%1$s at %2$s', 'mainwp-child' ), wp_date( get_option( 'date_format' ), $temp_single_item['time'], $backup_timezone ), wp_date( get_option( 'time_format' ), $temp_single_item['time'], $backup_timezone ) );
                                     $temp_single_item['timestamp'] = $item['time'];
                                     $output->items[]               = $temp_single_item;
                                 }
