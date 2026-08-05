@@ -73,30 +73,6 @@ class MainWP_Child_Updraft_Plus_Backups { //phpcs:ignore -- NOSONAR - multi meth
         }
 
         add_filter( 'mainwp_site_sync_others_data', array( $this, 'sync_others_data' ), 10, 2 );
-        add_filter( 'updraftplus_save_last_backup', array( __CLASS__, 'hook_updraft_plus_save_last_backup' ) );
-    }
-
-    /**
-     * Hook UpdraftPlus save last backup.
-     *
-     * @param array $last_backup Backup array.
-     *
-     * @return array $last_backup Return response array.
-     *
-     * @uses \MainWP\Child\MainWP_Utility::update_lasttime_backup()
-     */
-    public static function hook_updraft_plus_save_last_backup( $last_backup ) {
-        if ( ! is_array( $last_backup ) ) {
-            return $last_backup;
-        }
-
-        if ( isset( $last_backup['backup_time'] ) ) {
-            $backup_time = $last_backup['backup_time'];
-            if ( $last_backup['success'] ) {
-                MainWP_Utility::update_lasttime_backup( 'updraftplus', $backup_time );
-            }
-        }
-        return $last_backup;
     }
 
     /**

@@ -179,6 +179,7 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
 
                 add_action( 'admin_init', array( $this, 'init_download_backup' ) );
                 add_filter( 'mainwp_site_sync_others_data', array( $this, 'sync_others_data' ), 10, 2 );
+                add_action( 'backwpup_job_success', array( $this, 'log_successful_backup' ), 10, 2 );
             }
         } catch ( MainWP_Exception $e ) {
             $this->is_backwpup_installed = false;
@@ -204,6 +205,18 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
                 define( 'BACKWPUP_INITIALIZED', true );
             }
         }
+    }
+
+    /**
+     * Import the successful BackWPup job immediately after its log is closed.
+     *
+     * @param array  $job         BackWPup job data.
+     * @param string $destination Backup destination.
+     * @return void
+     */
+    public function log_successful_backup( $job = array(), $destination = '' ) {
+        unset( $job, $destination );
+        $this->do_reports_log( 'backwpup' );
     }
 
     /**
@@ -462,7 +475,9 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
             MainWP_Helper::instance()->check_classes_exists( array( '\BackWPup_File', '\BackWPup_Job' ) );
             MainWP_Helper::instance()->check_methods( '\BackWPup_File', array( 'get_absolute_path' ) );
             MainWP_Helper::instance()->check_methods( '\BackWPup_Job', array( 'read_logheader' ) );
-            $lasttime_logged = MainWP_Utility::get_lasttime_backup( 'backwpup' );
+            $lasttime_logged = (int) MainWP_Utility::get_lasttime_backup( 'backwpup' );
+            $scan_from       = max( 0, $lasttime_logged - ( 7 * DAY_IN_SECONDS ) );
+            $scan_until      = time();
             $log_folder      = get_site_option( 'backwpup_cfg_logfolder' );
             $log_folder      = \BackWPup_File::get_absolute_path( $log_folder );
             $log_folder      = untrailingslashit( $log_folder );
@@ -479,10 +494,15 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
                 closedir( $dir );
             }
 
-            $log_items = array();
+            $log_items          = array();
+            $can_advance_cursor = true;
             foreach ( $logfiles as $mtime => $logfile ) {
                 $meta = \BackWPup_Job::read_logheader( $log_folder . '/' . $logfile );
-                if ( ! isset( $meta['logtime'] ) || $meta['logtime'] < $lasttime_logged ) {
+                if ( ! is_array( $meta ) || ! isset( $meta['logtime'] ) ) {
+                    $can_advance_cursor = false;
+                    continue;
+                }
+                if ( $meta['logtime'] < $scan_from || $meta['logtime'] > $scan_until ) {
                     continue;
                 }
 
@@ -504,12 +524,8 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
                 );
 
                 $new_lasttime_logged = $lasttime_logged;
-
                 foreach ( $log_items as $log ) {
-                    $backup_time = $log['logtime'];
-                    if ( $backup_time < $lasttime_logged ) {
-                        continue;
-                    }
+                    $backup_time   = $log['logtime'];
                     $job_job_types = explode( '+', $log['type'] );
                     $backup_type   = '';
                     foreach ( $job_job_types as $typeid ) {
@@ -519,19 +535,30 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
                     }
 
                     if ( empty( $backup_type ) ) {
+                        $can_advance_cursor = false;
                         continue;
                     } else {
                         $backup_type = ltrim( $backup_type, ' + ' );
                     }
-                    $message = 'BackWPup backup finished (' . $backup_type . ')';
-                    do_action( 'mainwp_reports_backwpup_backup', $message, $backup_type, $backup_time );
+                    $message     = 'BackWPup backup finished (' . $backup_type . ')';
+                    $fingerprint = MainWP_Utility::backup_fingerprint(
+                        'backwpup',
+                        isset( $log['jobid'] ) ? $log['jobid'] : 'unknown',
+                        $log['file']
+                    );
+                    do_action( 'mainwp_reports_backwpup_backup', $message, $backup_type, $backup_time, $fingerprint );
+
+                    if ( ! MainWP_Utility::backup_fingerprint_logged( $fingerprint ) ) {
+                        $can_advance_cursor = false;
+                        continue;
+                    }
 
                     if ( $new_lasttime_logged < $backup_time ) {
                         $new_lasttime_logged = $backup_time;
                     }
                 }
 
-                if ( $new_lasttime_logged > $lasttime_logged ) {
+                if ( $can_advance_cursor && $new_lasttime_logged > $lasttime_logged ) {
                     MainWP_Utility::update_lasttime_backup( 'backwpup', $new_lasttime_logged ); // to support backup before update feature.
                 }
             }
@@ -1099,7 +1126,7 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
                                     $temp_single_item['dest'] = $jobid . '_' . $dest;
                                     // translators: 1: date, 2: time.
                                     // Use the child site's timezone explicitly so Dashboard and BackWPup show the same time.
-                                    $backup_timezone              = wp_timezone();
+                                    $backup_timezone               = wp_timezone();
                                     $temp_single_item['timeloc']   = sprintf( esc_html__( '%1$s at %2$s', 'mainwp-child' ), wp_date( get_option( 'date_format' ), $temp_single_item['time'], $backup_timezone ), wp_date( get_option( 'time_format' ), $temp_single_item['time'], $backup_timezone ) );
                                     $temp_single_item['timestamp'] = $item['time'];
                                     $output->items[]               = $temp_single_item;

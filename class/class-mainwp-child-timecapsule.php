@@ -1050,10 +1050,6 @@ class MainWP_Child_Timecapsule { //phpcs:ignore -- NOSONAR - multi methods.
 
             $backup_time = $config->get_option( 'last_backup_time' );
 
-            if ( ! empty( $backup_time ) ) {
-                MainWP_Utility::update_lasttime_backup( 'wptimecapsule', $backup_time );
-            }
-
             $last_time       = time() - 24 * 7 * 2 * 60 * 60;
             $lasttime_logged = MainWP_Utility::get_lasttime_backup( 'wptimecapsule' );
             if ( empty( $lasttime_logged ) ) {
@@ -1064,6 +1060,7 @@ class MainWP_Child_Timecapsule { //phpcs:ignore -- NOSONAR - multi methods.
 
             if ( is_array( $all_last_backups ) ) {
                 $formatted_backups = array();
+                $value_array       = array();
                 foreach ( $all_last_backups as $key => $value ) {
                     $value_array                                     = (array) $value;
                     $formatted_backups[ $value_array['backupID'] ][] = $value_array;
@@ -1073,7 +1070,11 @@ class MainWP_Child_Timecapsule { //phpcs:ignore -- NOSONAR - multi methods.
                 if ( ! empty( $formatted_backups ) ) {
                     foreach ( $formatted_backups as $key => $value ) {
                         $backup_time = $key;
-                        do_action( 'mainwp_reports_wptimecapsule_backup', $message, $backup_type, $backup_time );
+                        $fingerprint = MainWP_Utility::backup_fingerprint( 'wptimecapsule', $value_array['backupID'] );
+                        do_action( 'mainwp_reports_wptimecapsule_backup', $message, $backup_type, $backup_time, $fingerprint );
+                        if ( MainWP_Utility::backup_fingerprint_logged( $fingerprint ) ) {
+                            MainWP_Utility::update_lasttime_backup( 'wptimecapsule', $backup_time );
+                        }
                     }
                 }
             }
