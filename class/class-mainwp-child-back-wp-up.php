@@ -481,24 +481,64 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
             $log_folder      = get_site_option( 'backwpup_cfg_logfolder' );
             $log_folder      = \BackWPup_File::get_absolute_path( $log_folder );
             $log_folder      = untrailingslashit( $log_folder );
-
-            $logfiles = array();
-            $dir      = opendir( $log_folder );
-            if ( is_readable( $log_folder ) && $dir ) {
+            $logfiles        = array();
+            $dir             = false;
+            if ( is_dir( $log_folder ) && is_readable( $log_folder ) ) {
+                $dir = opendir( $log_folder );
+            }
+            if ( $dir ) {
                 while ( ( $file = readdir( $dir ) ) !== false ) {
                     $log_file = $log_folder . '/' . $file;
                     if ( is_file( $log_file ) && is_readable( $log_file ) && false !== strpos( $file, 'backwpup_log_' ) && false !== strpos( $file, '.html' ) ) {
-                        $logfiles[] = $file;
+                        $logfiles[] = $log_file;
                     }
                 }
                 closedir( $dir );
             }
 
+            // BackWPup stores logs in uploads/backwpup/{hash}/logs on version.
+            $upload_dir   = wp_upload_dir();
+            $search_roots = array_unique(
+                array_filter(
+                    array(
+                        $log_folder,
+                        trailingslashit( $upload_dir['basedir'] ) . 'backwpup',
+                    )
+                )
+            );
+
+            foreach ( $search_roots as $search_root ) {
+                if ( ! is_dir( $search_root ) || ! class_exists( '\RecursiveDirectoryIterator' ) ) {
+                    continue;
+                }
+
+                try {
+                    $iterator = new \RecursiveIteratorIterator(
+                        new \RecursiveDirectoryIterator( $search_root, \FilesystemIterator::SKIP_DOTS )
+                    );
+                    foreach ( $iterator as $nested_file ) {
+                        if ( ! $nested_file->isFile() || ! $nested_file->isReadable() ) {
+                            continue;
+                        }
+
+                        $filename = $nested_file->getFilename();
+                        if ( 0 === strpos( $filename, 'backwpup_log_' ) && false !== strpos( $filename, '.html' ) ) {
+                            $logfiles[] = $nested_file->getPathname();
+                        }
+                    }
+                } catch ( \UnexpectedValueException $exception ) {
+                    // A missing or unreadable nested directory must not stop
+                    // other log roots from being scanned.
+                    unset( $exception );
+                }
+            }
+            $logfiles           = array_values( array_unique( $logfiles ) );
             $log_items          = array();
             $can_advance_cursor = true;
             foreach ( $logfiles as $mtime => $logfile ) {
-                $meta = \BackWPup_Job::read_logheader( $log_folder . '/' . $logfile );
-                if ( ! is_array( $meta ) || ! isset( $meta['logtime'] ) ) {
+                $log_path = false !== strpos( $logfile, '/' ) ? $logfile : $log_folder . '/' . $logfile;
+                $meta     = \BackWPup_Job::read_logheader( $log_path );
+                if ( ! is_array( $meta ) || ! isset( $meta['logtime'], $meta['type'] ) || '' === (string) $meta['type'] ) {
                     $can_advance_cursor = false;
                     continue;
                 }
@@ -511,7 +551,7 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
                 }
 
                 $log_items[ $mtime ]         = $meta;
-                $log_items[ $mtime ]['file'] = $logfile;
+                $log_items[ $mtime ]['file'] = basename( $logfile );
             }
 
             if ( ! empty( $log_items ) ) {
@@ -563,7 +603,7 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
                 }
             }
         } catch ( MainWP_Exception $ex ) {
-            // ok!
+            // Keep the existing behavior: an invalid BackWPup installation must not interrupt the child request.
         }
     }
 
