@@ -1127,7 +1127,9 @@ class MainWP_Utility { //phpcs:ignore -- NOSONAR - multi methods.
         if ( class_exists( '\WP_MainWP_Stream\Connector_MainWP_Backups' ) && method_exists( '\WP_MainWP_Stream\Connector_MainWP_Backups', 'was_fingerprint_logged' ) ) {
             return \WP_MainWP_Stream\Connector_MainWP_Backups::was_fingerprint_logged( $fingerprint );
         }
-        return false;
+
+        // Fallback to the legacy option-based registry.
+        return true;
     }
 
     /**
