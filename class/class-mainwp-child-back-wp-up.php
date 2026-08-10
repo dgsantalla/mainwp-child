@@ -179,7 +179,7 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
 
                 add_action( 'admin_init', array( $this, 'init_download_backup' ) );
                 add_filter( 'mainwp_site_sync_others_data', array( $this, 'sync_others_data' ), 10, 2 );
-                add_action( 'backwpup_job_success', array( $this, 'log_successful_backup' ), 10, 2 );
+                add_action( 'backwpup_end_job', array( $this, 'log_successful_backup' ), 10, 3 );
             }
         } catch ( MainWP_Exception $e ) {
             $this->is_backwpup_installed = false;
@@ -208,15 +208,16 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
-     * Import the successful BackWPup job immediately after its log is closed.
+     * Scan the completed BackWPup log after every destination has finished.
      *
-     * @param array  $job         BackWPup job data.
-     * @param string $destination Backup destination.
+     * @param array        $job         BackWPup job data.
+     * @param string       $backup_file Backup file name.
+     * @param BackWPup_Job $backwpup_job BackWPup job instance.
      * @return void
      */
-    public function log_successful_backup( $job = array(), $destination = '' ) {
-        unset( $job, $destination );
-        $this->do_reports_log( 'backwpup' );
+    public function log_successful_backup( $job = array(), $backup_file = '', $backwpup_job = null ) {
+        unset( $job, $backup_file, $backwpup_job );
+        $this->do_site_stats();
     }
 
     /**

@@ -73,6 +73,54 @@ class MainWP_Child_Updraft_Plus_Backups { //phpcs:ignore -- NOSONAR - multi meth
         }
 
         add_filter( 'mainwp_site_sync_others_data', array( $this, 'sync_others_data' ), 10, 2 );
+
+        // Reports owns the reporting callback when it is active. Register the
+        // cursor-only fallback after all plugins have loaded so it cannot be
+        // registered alongside Reports' callback.
+        if ( did_action( 'plugins_loaded' ) ) {
+            $this->maybe_register_updraftplus_cursor_hook();
+        } else {
+            add_action( 'plugins_loaded', array( $this, 'maybe_register_updraftplus_cursor_hook' ), 100 );
+        }
+    }
+
+    /**
+     * Register the fallback cursor callback only when Reports does not own it.
+     *
+     * @return void
+     */
+    public function maybe_register_updraftplus_cursor_hook() {
+        // If the Reports plugin is active, it owns the callback and we do not register ours.
+        $reports_plugin = 'mainwp-child-reports/mainwp-child-reports.php';
+
+        if ( is_plugin_active( $reports_plugin ) || ( is_multisite() && is_plugin_active_for_network( $reports_plugin ) ) ) {
+            return;
+        }
+
+        $reports_callback = array(
+            'WP_MainWP_Stream\\MainWP_Child_Report_Helper',
+            'hook_updraftplus_save_last_backup',
+        );
+
+        if ( false === has_filter( 'updraftplus_save_last_backup', $reports_callback ) ) {
+            add_filter( 'updraftplus_save_last_backup', array( __CLASS__, 'hook_updraft_plus_save_last_backup' ) );
+        }
+    }
+
+    /**
+     * Keep the backup cursor used by MainWP Child Stats in sync with UpdraftPlus.
+     *
+     * @param array $last_backup Backup metadata.
+     * @return array
+     */
+    public static function hook_updraft_plus_save_last_backup( $last_backup ) {
+        if ( ! is_array( $last_backup ) || empty( $last_backup['success'] ) || ! isset( $last_backup['backup_time'] ) ) {
+            return $last_backup;
+        }
+
+        MainWP_Utility::update_lasttime_backup( 'updraftplus', $last_backup['backup_time'] );
+
+        return $last_backup;
     }
 
     /**

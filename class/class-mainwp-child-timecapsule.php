@@ -1070,7 +1070,7 @@ class MainWP_Child_Timecapsule { //phpcs:ignore -- NOSONAR - multi methods.
                 if ( ! empty( $formatted_backups ) ) {
                     foreach ( $formatted_backups as $key => $value ) {
                         $backup_time = $key;
-                        $fingerprint = MainWP_Utility::backup_fingerprint( 'wptimecapsule', $value_array['backupID'] );
+                        $fingerprint = MainWP_Utility::backup_fingerprint( 'wptimecapsule', $key );
                         do_action( 'mainwp_reports_wptimecapsule_backup', $message, $backup_type, $backup_time, $fingerprint );
                         if ( MainWP_Utility::backup_fingerprint_logged( $fingerprint ) ) {
                             MainWP_Utility::update_lasttime_backup( 'wptimecapsule', $backup_time );

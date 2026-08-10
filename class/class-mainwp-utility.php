@@ -1124,7 +1124,7 @@ class MainWP_Utility { //phpcs:ignore -- NOSONAR - multi methods.
      * @return bool
      */
     public static function backup_fingerprint_logged( $fingerprint ) {
-        if ( class_exists( '\WP_MainWP_Stream\Connector_MainWP_Backups' ) ) {
+        if ( class_exists( '\WP_MainWP_Stream\Connector_MainWP_Backups' ) && method_exists( '\WP_MainWP_Stream\Connector_MainWP_Backups', 'was_fingerprint_logged' ) ) {
             return \WP_MainWP_Stream\Connector_MainWP_Backups::was_fingerprint_logged( $fingerprint );
         }
         return false;
