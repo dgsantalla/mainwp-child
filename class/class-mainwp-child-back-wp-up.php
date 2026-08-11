@@ -538,6 +538,11 @@ class MainWP_Child_Back_WP_Up { //phpcs:ignore -- NOSONAR - multi methods.
             $can_advance_cursor = true;
             foreach ( $logfiles as $mtime => $logfile ) {
                 $log_path = false !== strpos( $logfile, '/' ) ? $logfile : $log_folder . '/' . $logfile;
+                $file_mtime = filemtime( $log_path );
+                if ( false === $file_mtime || $file_mtime < $scan_from || $file_mtime > $scan_until ) {
+                    continue;
+                }
+
                 $meta     = \BackWPup_Job::read_logheader( $log_path );
                 if ( ! is_array( $meta ) || ! isset( $meta['logtime'], $meta['type'] ) || '' === (string) $meta['type'] ) {
                     $can_advance_cursor = false;

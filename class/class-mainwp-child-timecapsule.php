@@ -1068,13 +1068,20 @@ class MainWP_Child_Timecapsule { //phpcs:ignore -- NOSONAR - multi methods.
                 $message     = 'WP Time Capsule backup finished';
                 $backup_type = 'WP Time Capsule backup';
                 if ( ! empty( $formatted_backups ) ) {
+                    $can_advance_cursor = true;
                     foreach ( $formatted_backups as $key => $value ) {
                         $backup_time = $key;
                         $fingerprint = MainWP_Utility::backup_fingerprint( 'wptimecapsule', $key );
                         do_action( 'mainwp_reports_wptimecapsule_backup', $message, $backup_type, $backup_time, $fingerprint );
                         if ( MainWP_Utility::backup_fingerprint_logged( $fingerprint ) ) {
-                            MainWP_Utility::update_lasttime_backup( 'wptimecapsule', $backup_time );
+                            continue;
                         }
+
+                        $can_advance_cursor = false;
+                    }
+
+                    if ( $can_advance_cursor ) {
+                        MainWP_Utility::update_lasttime_backup( 'wptimecapsule', $backup_time );
                     }
                 }
             }
