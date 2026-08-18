@@ -1141,6 +1141,12 @@ class MainWP_Connect { //phpcs:ignore -- NOSONAR - multi methods.
             $auths = array();
         }
 
+        $keys = get_option( 'mainwp_child_auth_keys' );
+
+        if ( ! is_array( $keys ) ) {
+            $keys = array();
+        }
+
         if ( ! isset( $auths['last'] ) || $auths['last'] < mktime( 0, 0, 0, date( 'm' ), date( 'd' ), date( 'Y' ) ) ) { // phpcs:ignore -- local time required to achieve desired results, pull request solutions appreciated.
             // Generate code for today.
             for ( $i = 0; $i < $this->maxHistory; $i++ ) {
@@ -1149,14 +1155,26 @@ class MainWP_Connect { //phpcs:ignore -- NOSONAR - multi methods.
                 }
 
                 $auths[ $i ] = $auths[ $i + 1 ];
+
+                if ( isset( $keys[ $i + 1 ] ) ) {
+                    $keys[ $i ] = $keys[ $i + 1 ];
+                }
             }
+
             $newI = $this->maxHistory + 1;
             while ( isset( $auths[ $newI ] ) ) {
                 unset( $auths[ $newI++ ] );
+                if ( isset( $keys[ $newI++ ] ) ) {
+                    unset( $keys[ $newI++ ] );
+                }
             }
-            $auths[ $this->maxHistory ] = md5( MainWP_Helper::rand_string( 14 ) ); // NOSONAR - safe.
+
+            $key                        = MainWP_Helper::rand_hmac_key();
+            $auths[ $this->maxHistory ] = hash_hmac( 'sha256', $this->maxHistory, $key );
+            $keys[ $this->maxHistory ]  = $key;
             $auths['last']              = time();
             MainWP_Helper::update_option( 'mainwp_child_auth', $auths, 'yes' );
+            MainWP_Helper::update_option( 'mainwp_child_auth_keys', $keys, 'yes' );
         }
     }
 
@@ -1169,13 +1187,38 @@ class MainWP_Connect { //phpcs:ignore -- NOSONAR - multi methods.
      *
      * @return bool true|false If valid authentication, return true, if not, return false.
      */
-    public function is_valid_auth( $key ) {
+    public function is_valid_auth( $signature ) {
         $auths = get_option( 'mainwp_child_auth' );
         if ( ! is_array( $auths ) ) {
             return false;
         }
+
+        $keys = get_option( 'mainwp_child_auth_keys' );
+        if ( ! is_array( $keys ) ) {
+            $keys = array();
+        }
+
         for ( $i = 0; $i <= $this->maxHistory; $i++ ) {
-            if ( isset( $auths[ $i ] ) && ( $auths[ $i ] === $key ) ) {
+            if ( isset( $auths[ $i ] ) && isset( $keys[ $i ] ) ) {
+                $stored_key = $keys[ $i ];
+                $expected   = hash_hmac(
+                    'sha256',
+                    (string) $this->maxHistory,
+                    $stored_key
+                );
+
+                if (
+                    ! is_string( $expected ) ||
+                    ! is_string( $signature ) ||
+                    ! hash_equals( $expected, $signature )
+                ) {
+                    return false;
+                }
+
+                return true;
+            }
+
+            if ( isset( $auths[ $i ] ) && ! isset( $keys[ $i ] ) && ( $auths[ $i ] === $signature ) ) { // compatible.
                 return true;
             }
         }
