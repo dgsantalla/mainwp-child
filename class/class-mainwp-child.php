@@ -296,7 +296,6 @@ class MainWP_Child {
             $suppress       = $wpdb->suppress_errors();
             $mainwp_options = array(
                 'mainwp_child_auth',
-                'mainwp_child_auth_keys',
                 'mainwp_child_reports_db',
                 'mainwp_child_pluginDir',
                 'mainwp_updraftplus_hide_plugin',
