@@ -414,17 +414,6 @@ class Changes_Logs_Logger { //phpcs:ignore -- NOSONAR -ok.
         static::insert_log( $type_id, $log_data );
     }
 
-
-    /**
-     * Method resolve_actor().
-     *
-     * @param array $log_data Log data.
-     *
-     * @return string Log actor.
-     */
-    private static function resolve_actor( $log_data = array() ) {
-    }
-
     /**
      * Method is_ignored_changes_log().
      *
