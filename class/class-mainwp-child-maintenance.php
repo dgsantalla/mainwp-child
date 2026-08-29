@@ -95,6 +95,93 @@ class MainWP_Child_Maintenance {
     }
 
     /**
+     * Method maintenance_get_counts()
+     *
+     * Returns the number of DB items pending cleanup without actually deleting them.
+     *
+     * @return array<string,mixed>
+     */
+    public function maintenance_get_counts() {
+        global $wpdb;
+
+        $now = time();
+        $counts = array(
+            'revisions'          => 0,
+            'autodraft'          => 0,
+            'trashpost'          => 0,
+            'spam'               => 0,
+            'pending'            => 0,
+            'trashcomment'       => 0,
+            'tags'               => 0,
+            'categories'         => 0,
+            'transients_expired' => 0,
+        );
+
+        // $wpdb->get_var() is safe and explicit here: we are counting rows for a maintenance summary.
+        $counts['revisions'] = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'revision'" );
+        $counts['autodraft'] = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_status = 'auto-draft'" );
+        $counts['trashpost'] = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_status = 'trash'" );
+        $counts['spam'] = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->comments} WHERE comment_approved = 'spam'" );
+        $counts['pending'] = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->comments} WHERE comment_approved = '0'" );
+        $counts['trashcomment'] = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->comments} WHERE comment_approved = 'trash'" );
+
+        $tag_terms = get_terms(
+            array(
+                'taxonomy'   => 'post_tag',
+                'hide_empty' => false,
+            )
+        );
+        if ( ! is_wp_error( $tag_terms ) && is_array( $tag_terms ) ) {
+            $counts['tags'] = count( array_filter( $tag_terms, fn( $tag ) => 0 === (int) $tag->count ) );
+        }
+
+        $category_terms = get_terms(
+            array(
+                'taxonomy'   => 'category',
+                'hide_empty' => false,
+            )
+        );
+        if ( ! is_wp_error( $category_terms ) && is_array( $category_terms ) ) {
+            $counts['categories'] = count( array_filter( $category_terms, fn( $cat ) => 0 === (int) $cat->count ) );
+        }
+
+        $expired_transients = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s AND option_value < %d",
+                $wpdb->esc_like( '_transient_timeout_' ) . '%',
+                $now
+            )
+        );
+        $counts['transients_expired'] += $expired_transients;
+
+        if ( is_multisite() ) {
+            $expired_site_transients = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->sitemeta} WHERE meta_key LIKE %s AND meta_value < %d",
+                    $wpdb->esc_like( '_site_transient_timeout_' ) . '%',
+                    $now
+                )
+            );
+        } else {
+            $expired_site_transients = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s AND option_value < %d",
+                    $wpdb->esc_like( '_site_transient_timeout_' ) . '%',
+                    $now
+                )
+            );
+        }
+        $counts['transients_expired'] += $expired_site_transients;
+
+        MainWP_Helper::write(
+            array(
+                'status' => 'SUCCESS',
+                'counts' => $counts,
+            )
+        );
+    }
+
+    /**
      * Method maintenance_db()
      *
      * Child site database maintenance.

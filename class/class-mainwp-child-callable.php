@@ -65,6 +65,7 @@ class MainWP_Child_Callable { //phpcs:ignore -- NOSONAR - multi methods.
         'user_action'              => 'user_action',
         'search_users'             => 'search_users',
         'maintenance_site'         => 'maintenance_site',
+        'maintenance_counts'       => 'maintenance_counts',
         'branding_child_plugin'    => 'branding_child_plugin',
         'code_snippet'             => 'code_snippet',
         'uploader_action'          => 'uploader_action',
@@ -457,6 +458,17 @@ class MainWP_Child_Callable { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public function maintenance_site() {
         MainWP_Child_Maintenance::get_instance()->maintenance_site();
+    }
+
+    /**
+     * Method maintenance_counts()
+     *
+     * Fire off the maintenance_get_counts() function.
+     *
+     * @uses \MainWP\Child\MainWP_Child_Maintenance::maintenance_get_counts()
+     */
+    public function maintenance_counts() {
+        MainWP_Child_Maintenance::get_instance()->maintenance_get_counts();
     }
 
     /**
