@@ -243,9 +243,12 @@ class MainWP_Child_Maintenance {
         }
 
         if ( in_array( 'tags', $maint_options ) ) {
+            // La taxonomía tiene que ser 'post_tag': upstream pedía 'category'
+            // y después borraba con wp_delete_term( $id, 'post_tag' ), así que
+            // el ID nunca existía en esa taxonomía y no se borraba nada.
             $post_tags = get_terms(
                 array(
-                    'taxonomy'   => 'category',
+                    'taxonomy'   => 'post_tag',
                     'hide_empty' => false,
                 )
             );
