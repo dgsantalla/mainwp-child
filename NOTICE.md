@@ -35,6 +35,11 @@ and hooks were left as in the original.
   (`plugin_action_links_...`, the branding/update-nag helpers, and the
   system-report plugin list) to use the actual file path dynamically instead
   of the old hardcoded name.
+- Bundled [Plugin Update Checker](https://github.com/YahnisElsts/plugin-update-checker)
+  5.7 (`libs/plugin-update-checker/`, MIT license — see its own `license.txt`)
+  to deliver updates from TutorWP's own server instead of wordpress.org. It
+  is the sole mechanism that actually delivers updates; the `Update URI`
+  header only opts the plugin out of wordpress.org's own check.
 
 Full history of these changes, including the reasoning behind each one, is
 kept in the TutorWP project repository

@@ -12,7 +12,7 @@
  * Author: TutorWP
  * Author URI: https://tutorwp.cloud
  * Text Domain: mainwp-child
- * Version: 6.1.8.1
+ * Version: 6.1.8.2
  * Update URI: https://tutorwp.cloud/conector/
  * Requires at least: 6.2
  * Requires PHP: 7.4
@@ -110,6 +110,22 @@ if ( function_exists( 'spl_autoload_register' ) ) {
 }
 
 require_once MAINWP_CHILD_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'functions.php'; // NOSONAR - WP compatible.
+
+// Canal de actualizaciones propio (T6 del plan de TutorWP Conector). Plugin
+// Update Checker es la UNICA autoridad que entrega la actualizacion -- via su
+// propio hook en site_transient_update_plugins, sin relacion con el header
+// "Update URI" de arriba. Ese header no hace nada por si solo: solo le dice
+// al nucleo de WordPress que NO consulte wordpress.org para este plugin.
+// Verificado leyendo el codigo real de PUC 5.7 (libs/plugin-update-checker/):
+// no menciona "Update URI" en ningun lado, asi que no hay forma de que los
+// dos mecanismos se superpongan o compitan entre si.
+require_once MAINWP_CHILD_PLUGIN_DIR . 'libs' . DIRECTORY_SEPARATOR . 'plugin-update-checker' . DIRECTORY_SEPARATOR . 'plugin-update-checker.php'; // NOSONAR - WP compatible.
+
+\YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+    'https://tutorwp.cloud/conector/metadata.json',
+    __FILE__,
+    'tutorwp-conector'
+);
 
 // Delay the heavy constructor until we really need it.
 $mainWPChild = null;
