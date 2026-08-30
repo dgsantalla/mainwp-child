@@ -254,7 +254,10 @@ class MainWP_Child {
         add_action( 'init', array( $this, 'parse_init' ), 9999 );
         add_action( 'init', array( $this, 'init_hooks' ), 9 );
         add_action( 'admin_init', array( $this, 'admin_init' ) );
-        add_action( 'plugin_action_links_mainwp-child/mainwp-child.php', array( $this, 'plugin_settings_link' ) );
+        // Nombre dinamico, no hardcodeado: el basename cambio con el renombre a
+        // tutorwp-conector y podria volver a cambiar. Hardcodear la ruta vieja
+        // dejaba el link de "Ajustes" sin aparecer nunca, en silencio.
+        add_action( 'plugin_action_links_' . plugin_basename( MAINWP_CHILD_FILE ), array( $this, 'plugin_settings_link' ) );
 
         // Essential filters for security.
         add_filter( 'mainwp_child_create_action_nonce', array( MainWP_Utility::class, 'hook_create_nonce_action' ), 10, 2 );

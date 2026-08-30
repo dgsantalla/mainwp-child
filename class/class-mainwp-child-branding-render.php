@@ -295,7 +295,7 @@ class MainWP_Child_Branding_Render {
                 if ( typeof( pagenow ) !== 'undefined' && pagenow === 'plugins' ) {
                     <?php
                     // hide update notice row.
-                    if ( in_array( 'mainwp-child/mainwp-child.php', $hide_slugs ) ) {
+                    if ( in_array( plugin_basename( MAINWP_CHILD_FILE ), $hide_slugs ) ) {
                         ?>
                         var el = document.querySelector( 'tr#mainwp-child-update' );
                         if ( typeof( el ) !== 'undefined' && el !== null ) {

@@ -622,10 +622,11 @@ class MainWP_Child_Server_Information extends MainWP_Child_Server_Information_Ba
             <td style="background: #333; color: #fff;" colspan="5"><?php esc_html_e( 'WordPress PLUGINS', 'mainwp-child' ); ?></td>
         </tr>
         <?php
-        $all_plugins = get_plugins();
+        $all_plugins  = get_plugins();
+        $own_basename = plugin_basename( MAINWP_CHILD_FILE );
         foreach ( $all_plugins as $slug => $plugin ) {
-            if ( ! empty( $branding_title ) && ( 'mainwp-child/mainwp-child.php' === $slug || 'mainwp-child-reports/mainwp-child-reports.php' === $slug ) ) {
-                if ( 'mainwp-child/mainwp-child.php' === $slug ) {
+            if ( ! empty( $branding_title ) && ( $own_basename === $slug || 'mainwp-child-reports/mainwp-child-reports.php' === $slug ) ) {
+                if ( $own_basename === $slug ) {
                     $plugin['Name'] = esc_html( stripslashes( $branding_title ) );
                 } elseif ( 'mainwp-child-reports/mainwp-child-reports.php' === $slug ) {
                     $plugin['Name'] = esc_html( stripslashes( $branding_title ) ) . ' reports';

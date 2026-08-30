@@ -1293,7 +1293,7 @@ class MainWP_Child_Branding { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array $slugs Updated array of slugs of all installed plugins.
      */
     public function hide_update_notice( $slugs ) {
-        $slugs[] = 'mainwp-child/mainwp-child.php';
+        $slugs[] = plugin_basename( MAINWP_CHILD_FILE );
         return $slugs;
     }
 
@@ -1317,8 +1317,9 @@ class MainWP_Child_Branding { //phpcs:ignore -- NOSONAR - multi methods.
             return $value;
         }
 
-        if ( isset( $value->response['mainwp-child/mainwp-child.php'] ) ) {
-            unset( $value->response['mainwp-child/mainwp-child.php'] );
+        $own_basename = plugin_basename( MAINWP_CHILD_FILE );
+        if ( isset( $value->response[ $own_basename ] ) ) {
+            unset( $value->response[ $own_basename ] );
         }
         return $value;
     }

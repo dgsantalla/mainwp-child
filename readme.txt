@@ -1,17 +1,23 @@
-=== MainWP Child - Securely Connects to the MainWP Dashboard to Manage Multiple Sites ===
-Contributors: mainwp
+=== TutorWP Conector ===
+Contributors: tutorwp
 Tags: update, backups, security, monitoring, site management
-Author: mainwp
-Author URI: https://mainwp.com
-Plugin URI: https://mainwp.com
+Author: TutorWP
+Author URI: https://tutorwp.cloud
+Plugin URI: https://tutorwp.cloud
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 6.1.8
+Stable tag: 6.1.8.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-MainWP Child establishes a secure link between your WordPress sites and your self-hosted MainWP Dashboard, simplifying site management.
+Conecta este sitio con tu panel de TutorWP para mantenerlo al día y protegido.
+
+== Derivative Notice ==
+
+TutorWP Conector is a derivative of [MainWP Child](https://github.com/mainwp/mainwp-child),
+licensed under the GPLv3. See `NOTICE.md` in this plugin's files for the base version and
+the full list of changes made on top of it.
 
 == Description ==
 
@@ -114,6 +120,13 @@ Please report security bugs found in the source code of the MainWP Child plugin 
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.1.8.1 - 8-30-2026 =
+
+* Renamed to TutorWP Conector, distributed through TutorWP's own automatic-update channel (see NOTICE.md).
+* Added: `maintenance_counts` action reporting DB cleanup counts and reclaimable table space without deleting anything.
+* Fixed: "unused tags" cleanup queried the wrong taxonomy and never deleted anything (upstream bug).
+* Fixed: the site's default category was counted as "unused" even though WordPress never allows it to be deleted.
 
 = 6.1.8 - 8-25-2026 =
 
