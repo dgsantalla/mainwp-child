@@ -7,7 +7,7 @@ Plugin URI: https://tutorwp.cloud
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 6.1.8.5
+Stable tag: 6.1.8.6
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -120,6 +120,10 @@ Please report security bugs found in the source code of the MainWP Child plugin 
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.1.8.6 - 8-30-2026 =
+
+* No functional changes. Version bump to verify the automatic-update mechanism end-to-end on real sites (T11).
 
 = 6.1.8.5 - 8-30-2026 =
 
