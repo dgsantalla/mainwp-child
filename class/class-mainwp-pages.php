@@ -233,8 +233,16 @@ class MainWP_Pages {
                 $child_menu_title      = stripslashes( $branding_header['name'] );
                 $child_page_title      = $child_menu_title . ' Settings';
             } else {
-                $child_menu_title = 'MainWP Child';
-                $child_page_title = 'MainWP Child Settings';
+                // Nombre real del plugin (header "Plugin Name"), no hardcodeado: en el
+                // fork renombrado (TutorWP Conector) esto decia siempre "MainWP Child"
+                // sin relacion con el nombre visible del plugin, aunque no hubiera
+                // branding configurado.
+                if ( ! function_exists( 'get_plugin_data' ) ) {
+                    require_once ABSPATH . 'wp-admin/includes/plugin.php';
+                }
+                $plugin_data      = get_plugin_data( MAINWP_CHILD_FILE, false, false );
+                $child_menu_title = ! empty( $plugin_data['Name'] ) ? $plugin_data['Name'] : 'MainWP Child';
+                $child_page_title = $child_menu_title . ' Settings';
             }
             $this->init_pages( $child_menu_title, $child_page_title );
         }
