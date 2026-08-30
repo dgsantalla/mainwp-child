@@ -7,7 +7,7 @@ Plugin URI: https://tutorwp.cloud
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 6.1.8.3
+Stable tag: 6.1.8.4
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -120,6 +120,10 @@ Please report security bugs found in the source code of the MainWP Child plugin 
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.1.8.4 - 8-30-2026 =
+
+* Changed: the "MainWP Child already active" notice now names the conflicting plugin directly instead of describing this plugin as "another MainWP connector" (avoids implying this plugin's own lineage to a technical user reading the notice).
 
 = 6.1.8.3 - 8-30-2026 =
 

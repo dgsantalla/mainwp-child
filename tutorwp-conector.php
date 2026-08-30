@@ -12,7 +12,7 @@
  * Author: TutorWP
  * Author URI: https://tutorwp.cloud
  * Text Domain: mainwp-child
- * Version: 6.1.8.3
+ * Version: 6.1.8.4
  * Update URI: https://tutorwp.cloud/conector/
  * Requires at least: 6.2
  * Requires PHP: 7.4
@@ -54,7 +54,7 @@ if ( function_exists( 'mainwp_child_autoload' ) ) {
         'admin_notices',
         static function () {
             echo '<div class="notice notice-error"><p>' .
-                esc_html__( 'TutorWP Conector no se activó: este sitio ya tiene otro conector de MainWP activo. Desactivalo primero y volvé a activar TutorWP Conector.', 'mainwp-child' ) .
+                esc_html__( 'Para activar TutorWP Conector, primero desactivá MainWP Child en este sitio.', 'mainwp-child' ) .
                 '</p></div>';
         }
     );
