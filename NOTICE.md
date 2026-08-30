@@ -40,6 +40,12 @@ and hooks were left as in the original.
   to deliver updates from TutorWP's own server instead of wordpress.org. It
   is the sole mechanism that actually delivers updates; the `Update URI`
   header only opts the plugin out of wordpress.org's own check.
+- Added a guard against the official MainWP Child plugin being active at the
+  same time as this one (both declare the same global function; PHP fatals
+  on the second declaration). The `mainwp_child_autoload()` declaration was
+  made conditional (`if ( ! function_exists( ... ) )`) to avoid the fatal at
+  all, and a friendly notice + automatic self-deactivation was added for the
+  case this plugin loads second.
 
 Full history of these changes, including the reasoning behind each one, is
 kept in the TutorWP project repository

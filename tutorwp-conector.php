@@ -12,7 +12,7 @@
  * Author: TutorWP
  * Author URI: https://tutorwp.cloud
  * Text Domain: mainwp-child
- * Version: 6.1.8.2
+ * Version: 6.1.8.3
  * Update URI: https://tutorwp.cloud/conector/
  * Requires at least: 6.2
  * Requires PHP: 7.4
@@ -23,6 +23,55 @@
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
+}
+
+/**
+ * Guarda contra el MainWP Child oficial (T7 del plan de TutorWP Conector, spec S3.6).
+ *
+ * TutorWP Conector es un renombre de superficie: adentro sigue siendo el mismo
+ * namespace, las mismas clases y la misma funcion global mainwp_child_autoload()
+ * que el MainWP Child oficial. Si los dos plugins estan activos a la vez, esa
+ * funcion se declara dos veces y PHP tira un fatal error inmediato -- probado
+ * de verdad en un WordPress descartable el 2026-08-30 (T3), no es una
+ * suposicion. La unica forma de evitarlo es chequear ANTES de la linea que
+ * declara esa funcion, mas abajo en este mismo archivo.
+ *
+ * WordPress ya evita que un fatal en la activacion deje el sitio roto o la
+ * opcion active_plugins corrupta (plugin_sandbox_scrape() dentro de
+ * activate_plugin(), verificado en el nucleo real) -- esto no es una red de
+ * seguridad que falte, es una mejora de UX: en vez del mensaje generico de
+ * WordPress, mostramos uno propio en espanol que dice que hacer, y ademas nos
+ * autodesactivamos para no quedar activos-pero-sin-hacer-nada.
+ *
+ * El caso inverso (el oficial se activa con el conector ya activo) no
+ * necesita codigo nuestro: ahi el fatal ocurre en el archivo del oficial, que
+ * no controlamos, y WordPress ya le muestra su propio aviso sin ayuda
+ * nuestra.
+ */
+if ( function_exists( 'mainwp_child_autoload' ) ) {
+
+    add_action(
+        'admin_notices',
+        static function () {
+            echo '<div class="notice notice-error"><p>' .
+                esc_html__( 'TutorWP Conector no se activó: este sitio ya tiene otro conector de MainWP activo. Desactivalo primero y volvé a activar TutorWP Conector.', 'mainwp-child' ) .
+                '</p></div>';
+        }
+    );
+
+    if ( function_exists( 'deactivate_plugins' ) ) {
+        add_action(
+            'admin_init',
+            static function () {
+                deactivate_plugins( plugin_basename( __FILE__ ) );
+                if ( isset( $_GET['activate'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- solo lee, no actua sobre datos.
+                    unset( $_GET['activate'] );
+                }
+            }
+        );
+    }
+
+    return;
 }
 
 require_once ABSPATH . 'wp-includes' . DIRECTORY_SEPARATOR . 'version.php'; // NOSONAR - WP compatible. Version information from WordPress.
@@ -87,20 +136,30 @@ if ( ! defined( 'MAINWP_CHILD_URL' ) ) {
  *
  * @uses \MainWP\Child\MainWP_Child()
  */
-function mainwp_child_autoload( $class_name ) {
+if ( ! function_exists( 'mainwp_child_autoload' ) ) {
+    // OJO: esta declaracion tiene que quedar DENTRO de un if. Una declaracion
+    // de funcion incondicional a nivel superior del archivo se registra en
+    // tiempo de COMPILACION -- antes de que corra una sola linea del script,
+    // incluido el "return" de la guarda de mas arriba. Sin este if, la guarda
+    // no evita el fatal por redeclaracion: PHP intenta compilar la funcion
+    // igual, pase lo que pase en el runtime. Probado de verdad (T7,
+    // 2026-08-30): con la guarda pero sin este if, el fatal seguia
+    // ocurriendo, sin que ninguna linea del archivo llegara a ejecutarse.
+    function mainwp_child_autoload( $class_name ) {
 
-    if ( \mainwp_child_modules_loader( $class_name ) ) {
-        return;
-    }
+        if ( \mainwp_child_modules_loader( $class_name ) ) {
+            return;
+        }
 
-    $autoload_dir = \trailingslashit( __DIR__ . '/class' );
+        $autoload_dir = \trailingslashit( __DIR__ . '/class' );
 
-    if ( 0 === strpos( $class_name, 'MainWP\Child' ) ) {
-        // strip the namespace prefix: MainWP\Child\ .
-        $class_name    = substr( $class_name, 13 );
-        $autoload_path = sprintf( '%sclass-%s.php', $autoload_dir, strtolower( str_replace( '_', '-', $class_name ) ) );
-        if ( file_exists( $autoload_path ) ) {
-            require_once $autoload_path; // NOSONAR - WP compatible.
+        if ( 0 === strpos( $class_name, 'MainWP\Child' ) ) {
+            // strip the namespace prefix: MainWP\Child\ .
+            $class_name    = substr( $class_name, 13 );
+            $autoload_path = sprintf( '%sclass-%s.php', $autoload_dir, strtolower( str_replace( '_', '-', $class_name ) ) );
+            if ( file_exists( $autoload_path ) ) {
+                require_once $autoload_path; // NOSONAR - WP compatible.
+            }
         }
     }
 }
