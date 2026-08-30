@@ -98,6 +98,8 @@ class MainWP_Child_Maintenance {
      * Method maintenance_get_counts()
      *
      * Returns the number of DB items pending cleanup without actually deleting them.
+     * `reclaimable_bytes` is the exception: not an item count, it's the bytes
+     * `OPTIMIZE TABLE` would free (see maintenance_get_reclaimable_bytes()).
      *
      * @return array<string,mixed>
      */
@@ -115,6 +117,7 @@ class MainWP_Child_Maintenance {
             'tags'               => 0,
             'categories'         => 0,
             'transients_expired' => 0,
+            'reclaimable_bytes'  => 0,
         );
 
         // $wpdb->get_var() is safe and explicit here: we are counting rows for a maintenance summary.
@@ -173,12 +176,61 @@ class MainWP_Child_Maintenance {
         }
         $counts['transients_expired'] += $expired_site_transients;
 
+        $counts['reclaimable_bytes'] = $this->maintenance_get_reclaimable_bytes();
+
         MainWP_Helper::write(
             array(
                 'status' => 'SUCCESS',
                 'counts' => $counts,
             )
         );
+    }
+
+    /**
+     * Method maintenance_get_reclaimable_bytes()
+     *
+     * Sum of `Data_free` (bytes an `OPTIMIZE TABLE` would reclaim) across this
+     * site's tables. Mismo `SHOW TABLE STATUS` que usa maintenance_optimize()
+     * para decidir qué tablas optimizar; acá es de solo lectura, no ejecuta
+     * ningún `OPTIMIZE TABLE`.
+     *
+     * @uses MainWP_Child_DB::to_query() Get the size of the DB.
+     * @uses MainWP_Child_DB::num_rows() Count the number of rows.
+     * @uses MainWP_Child_DB::is_result() Check if $result is an Instantiated object of \mysqli.
+     * @uses MainWP_Child_DB::fetch_array() Fetch an array.
+     *
+     * @used-by MainWP_Child_Maintenance::maintenance_get_counts() Returns the number of DB items pending cleanup.
+     *
+     * @return int Bytes recuperables sumados de las tablas del sitio.
+     */
+    private function maintenance_get_reclaimable_bytes() {
+
+        /**
+         * Object, providing access to the WordPress database.
+         *
+         * @global object $wpdb WordPress Database instance.
+         */
+        global $wpdb;
+
+        /**
+         * WordPress DB table prefix.
+         *
+         * @global string $table_prefix WordPress DB table prefix.
+         */
+        global $table_prefix;
+
+        $bytes  = 0;
+        $sql    = 'SHOW TABLE STATUS FROM `' . DB_NAME . '`';
+        $result = MainWP_Child_DB::to_query( $sql, $wpdb->dbh );
+        if ( MainWP_Child_DB::num_rows( $result ) && MainWP_Child_DB::is_result( $result ) ) {
+            while ( $row = MainWP_Child_DB::fetch_array( $result ) ) {
+                if ( strpos( $row['Name'], $table_prefix ) !== false ) {
+                    $bytes += (int) $row['Data_free'];
+                }
+            }
+        }
+
+        return $bytes;
     }
 
     /**
