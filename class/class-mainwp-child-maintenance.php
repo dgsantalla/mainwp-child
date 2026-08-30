@@ -138,6 +138,11 @@ class MainWP_Child_Maintenance {
             $counts['tags'] = count( array_filter( $tag_terms, fn( $tag ) => 0 === (int) $tag->count ) );
         }
 
+        // La categoria "default_category" del sitio (ej. "Sin categorizar") nunca se puede
+        // borrar -- wp_delete_term() la protege siempre y devuelve 0 en silencio (ver
+        // wp-includes/taxonomy.php). Si la contamos como "sin uso" cuando tiene 0 entradas,
+        // el numero nunca baja de 1 aunque se intente limpiar: no es pendiente, es intocable.
+        $default_category_id = (int) get_option( 'default_category' );
         $category_terms = get_terms(
             array(
                 'taxonomy'   => 'category',
@@ -145,7 +150,12 @@ class MainWP_Child_Maintenance {
             )
         );
         if ( ! is_wp_error( $category_terms ) && is_array( $category_terms ) ) {
-            $counts['categories'] = count( array_filter( $category_terms, fn( $cat ) => 0 === (int) $cat->count ) );
+            $counts['categories'] = count(
+                array_filter(
+                    $category_terms,
+                    fn( $cat ) => 0 === (int) $cat->count && (int) $cat->term_id !== $default_category_id
+                )
+            );
         }
 
         $expired_transients = (int) $wpdb->get_var(
@@ -315,6 +325,10 @@ class MainWP_Child_Maintenance {
         }
 
         if ( in_array( 'categories', $maint_options ) ) {
+            // wp_delete_term() protege siempre la default_category del sitio y devuelve 0 en
+            // silencio -- ver el mismo comentario en maintenance_get_counts(). Saltearla acá
+            // evita un intento que nunca puede tener efecto.
+            $default_category_id = (int) get_option( 'default_category' );
             $post_cats = get_terms(
                 array(
                     'taxonomy'   => 'category',
@@ -324,7 +338,7 @@ class MainWP_Child_Maintenance {
 
             if ( is_array( $post_cats ) ) {
                 foreach ( $post_cats as $cat ) {
-                    if ( 0 === (int) $cat->count ) {
+                    if ( 0 === (int) $cat->count && (int) $cat->term_id !== $default_category_id ) {
                         wp_delete_term( $cat->term_id, 'category' );
                     }
                 }
