@@ -12,7 +12,7 @@
  * Author: TutorWP
  * Author URI: https://tutorwp.cloud
  * Text Domain: mainwp-child
- * Version: 6.1.8.7
+ * Version: 6.1.8.8
  * Update URI: https://tutorwp.cloud/conector/
  * Requires at least: 6.2
  * Requires PHP: 7.4
@@ -200,15 +200,26 @@ require_once MAINWP_CHILD_PLUGIN_DIR . 'libs' . DIRECTORY_SEPARATOR . 'plugin-up
  * que no existe en nuestro languages/mainwp-child-es_ES.po -- vino de ahi.
  *
  * Arreglo real (pendiente, tarea grande): renombrar el Text Domain en todo el
- * fork. Esto es el parche mientras tanto: fuerza que WordPress busque el .mo
- * de 'en_US' para este dominio -- que no existe ni bundled ni descargado --
- * asi que load_textdomain() no encuentra nada y cae al string en ingles del
- * codigo fuente, que ya dice "TutorWP Conector" en todos lados.
+ * fork.
+ *
+ * Primer intento (filtro `plugin_locale`, version 6.1.8.7) NO alcanzo: WP 4.6+
+ * carga las traducciones "just in time" la primera vez que se traduce
+ * cualquier string de este dominio -- desde codigo nuestro que puede correr
+ * ANTES de que nuestra propia localization() llame a load_plugin_textdomain(),
+ * y una vez cargado un dominio, una segunda carga no lo reemplaza. Verificado
+ * en produccion real (seedix.co) tras publicar y actualizar la 6.1.8.7: seguia
+ * mostrando "MainWP" sin cambios.
+ *
+ * Este gancho es mas bajo nivel: intercepta DENTRO de load_textdomain(), el
+ * unico punto por el que pasan los dos caminos (la carga just-in-time Y
+ * nuestra llamada explicita). Devolver `true` le dice a WordPress "ya me
+ * encargue yo, no cargues ningun .mo" -- asi __()/_e() devuelven directo el
+ * string en ingles del codigo fuente, que ya dice "TutorWP Conector".
  */
 add_filter(
-    'plugin_locale',
-    static function ( $locale, $domain ) {
-        return 'mainwp-child' === $domain ? 'en_US' : $locale;
+    'override_load_textdomain',
+    static function ( $override, $domain ) {
+        return 'mainwp-child' === $domain ? true : $override;
     },
     10,
     2

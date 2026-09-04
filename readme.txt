@@ -7,7 +7,7 @@ Plugin URI: https://tutorwp.cloud
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 6.1.8.7
+Stable tag: 6.1.8.8
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -121,9 +121,13 @@ Please report security bugs found in the source code of the MainWP Child plugin 
 
 == Changelog ==
 
+= 6.1.8.8 - 9-4-2026 =
+
+* Fixed: the 6.1.8.7 mitigation for the "MainWP" leak in translations didn't take effect in production (a `plugin_locale` filter is too late for just-in-time translation loading). Switched to `override_load_textdomain`, which intercepts at the one point both loading paths share. Verified needed against seedix.co.
+
 = 6.1.8.7 - 9-4-2026 =
 
-* Fixed: WordPress auto-downloaded the real "MainWP Child" language pack from WordPress.org for this fork's Settings screen (same text domain), showing "MainWP" in the client's admin during initial site connection. Now forces English on that screen (which already reads "TutorWP Conector") until the underlying text domain is renamed.
+* Fixed: WordPress auto-downloaded the real "MainWP Child" language pack from WordPress.org for this fork's Settings screen (same text domain), showing "MainWP" in the client's admin during initial site connection. Attempted fix via `plugin_locale` filter — did not work, see 6.1.8.8.
 
 = 6.1.8.6 - 8-30-2026 =
 
