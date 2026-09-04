@@ -7,7 +7,7 @@ Plugin URI: https://tutorwp.cloud
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 6.1.8.6
+Stable tag: 6.1.8.7
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -120,6 +120,10 @@ Please report security bugs found in the source code of the MainWP Child plugin 
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.1.8.7 - 9-4-2026 =
+
+* Fixed: WordPress auto-downloaded the real "MainWP Child" language pack from WordPress.org for this fork's Settings screen (same text domain), showing "MainWP" in the client's admin during initial site connection. Now forces English on that screen (which already reads "TutorWP Conector") until the underlying text domain is renamed.
 
 = 6.1.8.6 - 8-30-2026 =
 

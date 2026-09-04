@@ -12,7 +12,7 @@
  * Author: TutorWP
  * Author URI: https://tutorwp.cloud
  * Text Domain: mainwp-child
- * Version: 6.1.8.6
+ * Version: 6.1.8.7
  * Update URI: https://tutorwp.cloud/conector/
  * Requires at least: 6.2
  * Requires PHP: 7.4
@@ -184,6 +184,34 @@ require_once MAINWP_CHILD_PLUGIN_DIR . 'libs' . DIRECTORY_SEPARATOR . 'plugin-up
     'https://tutorwp.cloud/conector/metadata.json',
     __FILE__,
     'tutorwp-conector'
+);
+
+/**
+ * Mitigacion rapida de la fuga de marca por traducciones (2026-09-04).
+ *
+ * El Text Domain de este fork sigue siendo 'mainwp-child' -- el mismo que el
+ * plugin real en WordPress.org. Eso ya estaba resuelto para actualizaciones
+ * (Update URI + Plugin Update Checker, arriba), pero las TRADUCCIONES son un
+ * mecanismo aparte: WordPress se baja solo el paquete de idioma oficial de
+ * "MainWP Child" desde WordPress.org (porque el dominio coincide) y lo guarda
+ * en wp-content/languages/plugins/, un lugar que PISA lo que trae este plugin.
+ * Encontrado en produccion real el 2026-09-04, reconectando seedix.co: la
+ * pantalla de Ajustes del child mostraba "MainWP" en espanol perfecto, texto
+ * que no existe en nuestro languages/mainwp-child-es_ES.po -- vino de ahi.
+ *
+ * Arreglo real (pendiente, tarea grande): renombrar el Text Domain en todo el
+ * fork. Esto es el parche mientras tanto: fuerza que WordPress busque el .mo
+ * de 'en_US' para este dominio -- que no existe ni bundled ni descargado --
+ * asi que load_textdomain() no encuentra nada y cae al string en ingles del
+ * codigo fuente, que ya dice "TutorWP Conector" en todos lados.
+ */
+add_filter(
+    'plugin_locale',
+    static function ( $locale, $domain ) {
+        return 'mainwp-child' === $domain ? 'en_US' : $locale;
+    },
+    10,
+    2
 );
 
 // Delay the heavy constructor until we really need it.
