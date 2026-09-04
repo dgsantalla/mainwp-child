@@ -7,7 +7,7 @@ Plugin URI: https://tutorwp.cloud
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 6.1.8.8
+Stable tag: 6.1.8.9
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -120,6 +120,10 @@ Please report security bugs found in the source code of the MainWP Child plugin 
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.1.8.9 - 9-4-2026 =
+
+* Fixed: most visible "MainWP" text in admin screens (Settings, Server Information) was the original plugin's hardcoded fallback, shown because the plugin's own built-in whitelabel mechanism was never activated for this fork — most of that text already used it via `%s` placeholders. Now defaults it on with "TutorWP Conector" unless real branding is configured. This is the actual fix, not a cosmetic patch like 6.1.8.7/6.1.8.8. Does not cover 100% of the fork's text yet (see docs/superpowers/plans/... whitelabel audit, pending).
 
 = 6.1.8.8 - 9-4-2026 =
 

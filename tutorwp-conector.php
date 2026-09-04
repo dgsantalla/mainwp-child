@@ -12,7 +12,7 @@
  * Author: TutorWP
  * Author URI: https://tutorwp.cloud
  * Text Domain: mainwp-child
- * Version: 6.1.8.8
+ * Version: 6.1.8.9
  * Update URI: https://tutorwp.cloud/conector/
  * Requires at least: 6.2
  * Requires PHP: 7.4
@@ -223,6 +223,44 @@ add_filter(
     },
     10,
     2
+);
+
+/**
+ * Arreglo real de la fuga de marca visible (2026-09-04): activar el whitelabel
+ * NATIVO del plugin, no reescribir strings a mano.
+ *
+ * MainWP Child (el original) ya trae un mecanismo de branding pensado para que
+ * el Dashboard real le empuje un nombre custom por API (`MainWP_Child_Branding`,
+ * opcion `mainwp_child_branding_settings`) -- y la mayoria de las pantallas
+ * visibles (incluida "Ajustes", verificado en class-mainwp-pages.php y
+ * class-mainwp-child-server-information.php) YA usan ese nombre via `%s` en
+ * vez de tener "MainWP" hardcodeado. El problema es que nunca lo activamos: en
+ * este fork nunca hay un Dashboard real empujando esas opciones, asi que cae
+ * siempre al fallback ('MainWP Child' literal).
+ *
+ * Este filtro simula que la branding YA esta configurada, con nuestro propio
+ * nombre -- sin usar la extension de branding real de MainWP (que exigiria una
+ * licencia y un Dashboard real), solo su mismo formato de opciones. Solo
+ * setea `name`: es la unica clave que el codigo real lee de `branding_header`
+ * (confirmado grepeando el codebase entero). No toca `remove_*` ni ningun otro
+ * flag, asi que ningun menu de WP se oculta de mas.
+ *
+ * NO resuelve el 100% del texto (3.308 menciones de "MainWP" en todo el fork,
+ * la mayoria nombres de clase/namespace que no se ven -- pero puede haber
+ * strings sueltos sin el patron `%s` en otras pantallas, sin relevar
+ * todavia). Es el arreglo real para la mayoria del texto visible verificado
+ * hasta ahora, no un parche cosmetico como los dos intentos anteriores.
+ */
+add_filter(
+    'mainwp_child_branding_init_options',
+    static function ( $opts ) {
+        $ya_tiene_nombre = ! empty( $opts['branding_header']['name'] );
+        if ( ! $ya_tiene_nombre ) {
+            $opts['branding_ext_enabled'] = 'Y';
+            $opts['branding_header']      = array( 'name' => 'TutorWP Conector' );
+        }
+        return $opts;
+    }
 );
 
 // Delay the heavy constructor until we really need it.
