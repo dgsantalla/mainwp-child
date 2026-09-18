@@ -46,6 +46,16 @@ class MainWP_Child_Branding { //phpcs:ignore -- NOSONAR - multi methods.
     public $child_branding_options = null;
 
     /**
+     * Nombre del plugin leido de su encabezado, cacheado por instancia.
+     *
+     * Ver get_plugin_display_name(). Null significa "todavia no leido"; cadena
+     * vacia significa "se leyo y no habia nombre", que son casos distintos.
+     *
+     * @var string|null Default null
+     */
+    private $plugin_display_name = null;
+
+    /**
      * Method instance()
      *
      * Create a public static instance.
@@ -1188,16 +1198,60 @@ class MainWP_Child_Branding { //phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Method get_branding_title()
      *
-     * Get custom title for the MainWP Child plugin.
+     * Nombre con el que este plugin se presenta al usuario del sitio.
      *
-     * @return mixed If branding enabled, return custom title.
+     * Devolvia cadena vacia cuando el whitelabel del panel no estaba activo, y
+     * cada uno de los seis llamadores se inventaba su propio respaldo. Los seis
+     * se inventaron el mismo: 'MainWP'. Como el whitelabel recien se activa
+     * cuando el panel empuja sus opciones AL CONECTAR, todo usuario nuevo
+     * atravesaba una ventana en la que el plugin se presentaba con el nombre
+     * del motor. Un beta tester real lo reporto el 2026-09-15: penso que tenia
+     * MainWP instalado y que por eso no podia conectar.
+     *
+     * Spec: docs/superpowers/specs/2026-09-18-fuga-marca-conector-design.md
+     *
+     * @return string Nombre de marca del panel si hay whitelabel; si no, el
+     *                nombre real del plugin.
      */
     public function get_branding_title() {
         if ( $this->is_branding() ) {
             $branding_header = $this->child_branding_options['branding_header'];
             return $branding_header['name'];
         }
-        return '';
+        return $this->get_plugin_display_name();
+    }
+
+    /**
+     * Method get_plugin_display_name()
+     *
+     * Nombre real del plugin, leido de su encabezado.
+     *
+     * Se lee del encabezado y no se escribe literal a proposito: si el plugin
+     * se vuelve a renombrar, esto sigue funcionando. Hardcodear el nombre es
+     * exactamente el error que este metodo existe para corregir, solo que con
+     * otra cadena.
+     *
+     * Cacheado en la instancia porque get_branding_title() se llama desde seis
+     * lugares, varios dentro del render de una pantalla, y get_plugin_data()
+     * lee y parsea el archivo cada vez.
+     *
+     * @return string Nombre del plugin, o cadena vacia si no se pudo leer.
+     */
+    private function get_plugin_display_name() {
+        if ( null !== $this->plugin_display_name ) {
+            return $this->plugin_display_name;
+        }
+
+        // Las seis llamadas viven en rutas de wp-admin, pero el require_once
+        // no cuesta nada y cubre a quien reutilice esto desde otro contexto.
+        if ( ! function_exists( 'get_plugin_data' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php'; // NOSONAR - WP compatible.
+        }
+
+        $plugin_data               = get_plugin_data( MAINWP_CHILD_FILE, false, false );
+        $this->plugin_display_name = ! empty( $plugin_data['Name'] ) ? $plugin_data['Name'] : '';
+
+        return $this->plugin_display_name;
     }
 
     /**
