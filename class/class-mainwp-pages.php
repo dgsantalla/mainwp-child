@@ -95,37 +95,64 @@ class MainWP_Pages {
 
 
     /**
-     * Show disconnected admin notice.
+     * Aviso que se muestra mientras el sitio todavia no esta conectado.
      *
-     * Show the Warning notice in case the site is not connected to MainWP Dashboard.
+     * Reemplaza al aviso original, que mostraba el logotipo de MainWP, el
+     * nombre del motor y un enlace a docs.mainwp.com. Como el whitelabel del
+     * panel recien se activa AL CONECTAR, ese aviso lo veia todo usuario nuevo:
+     * un beta tester real (2026-09-15) penso que tenia MainWP instalado y que
+     * por eso no podia conectar, salio a buscarlo, no lo encontro, y termino
+     * atribuyendolo a sus otros gestores de sitios.
+     *
+     * Spec: docs/superpowers/specs/2026-09-18-fuga-marca-conector-design.md
      *
      * @uses \MainWP\Child\MainWP_Child_Branding::get_branding_options()
-     * @uses \MainWP\Child\MainWP_Child_Branding::is_branding()
+     * @uses \MainWP\Child\MainWP_Child_Branding::get_branding_title()
+     * @uses \MainWP\Child\MainWP_Helper::get_site_unique_id()
      */
     public function admin_notice() { //phpcs:ignore -- NOSONAR -complexity.
         // Admin Notice...
         if ( ! get_option( 'mainwp_child_pubkey' ) && MainWP_Helper::is_admin() && is_admin() ) {
-            $branding_opts  = MainWP_Child_Branding::instance()->get_branding_options();
-            $child_name     = ( '' === $branding_opts['branding_preserve_title'] ) ? 'MainWP Child' : $branding_opts['branding_preserve_title'];
-            $dashboard_name = ( '' === $branding_opts['branding_preserve_title'] ) ? 'MainWP Dashboard' : $branding_opts['branding_preserve_title'] . ' Dashboard';
+            $branding_opts = MainWP_Child_Branding::instance()->get_branding_options();
 
-            $msg = '<div style="background:#ffffff;padding:20px;margin:20px 20px 20px 2px;border:1px solid #f4f4f4;">';
-            if ( ! MainWP_Child_Branding::instance()->is_branding() ) {
-                $msg .= '<div style="width:105px;float:left;margin-right:20px">';
-                $msg .= '<img alt="MainWP Icon" style="max-width:105px" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyNi4zLjEsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAxNzAgMTcwIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAxNzAgMTcwOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+DQo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPg0KCS5zdDB7ZmlsbDojN0ZCMTAwO30NCgkuc3Qxe2ZpbGw6I0ZGRkZGRjt9DQo8L3N0eWxlPg0KPGc+DQoJPGNpcmNsZSBjbGFzcz0ic3QwIiBjeD0iODUiIGN5PSI4NSIgcj0iNzguNjciLz4NCgk8Zz4NCgkJPGNpcmNsZSBjbGFzcz0ic3QxIiBjeD0iODUiIGN5PSIzNy44IiByPSIxNS43MyIvPg0KCQk8cG9seWdvbiBjbGFzcz0ic3QxIiBwb2ludHM9IjExMS43NSwxMzIuMiA4NSwxNDcuOTQgNTguMjUsMTMyLjIgODUsMjIuMDYgCQkiLz4NCgk8L2c+DQo8L2c+DQo8L3N2Zz4NCg==" />';
-                $msg .= '</div>';
+            // Un sitio que estuvo conectado a un panel con marca propia y se
+            // desconecto conservando esa marca sigue mostrandola. Si no hay
+            // ninguna, get_branding_title() devuelve el nombre real del plugin.
+            $child_name = ( '' === $branding_opts['branding_preserve_title'] )
+                ? MainWP_Child_Branding::instance()->get_branding_title()
+                : $branding_opts['branding_preserve_title'];
+
+            $panel_url = 'https://app.tutorwp.cloud/dashboard/sites/connect';
+
+            $msg = '<div class="notice notice-info" style="padding:20px;">';
+
+            $msg .= '<div style="font-size:1.4em;font-weight:600;margin-bottom:12px;">'
+                // translators: %s: nombre del plugin.
+                . sprintf( esc_html__( '%s está instalado correctamente.', 'mainwp-child' ), esc_html( $child_name ) )
+                . '</div>';
+
+            $msg .= '<div style="font-size:1.1em;margin-bottom:8px;">'
+                . esc_html__( 'Para conectar este sitio, entra a tu cuenta de TutorWP y ve a:', 'mainwp-child' )
+                . ' <strong>' . esc_html__( 'Mis sitios → Conectar sitio', 'mainwp-child' ) . '</strong>'
+                . '</div>';
+
+            // El codigo de seguridad se muestra ACA, listo para copiar, en vez
+            // de mandar a la persona a buscarlo a una pantalla de ajustes que
+            // no sabe que existe. Si esta activo y no se envia al conectar, la
+            // conexion falla con un error que no explica que hacer (REG_ERROR3).
+            $unique_id = MainWP_Helper::get_site_unique_id();
+            if ( '' !== $unique_id ) {
+                $msg .= '<div style="font-size:1.1em;margin-bottom:8px;">'
+                    . esc_html__( 'Este sitio pide un código de seguridad para conectarse. Cópialo:', 'mainwp-child' )
+                    . ' <code style="font-size:1.1em;padding:2px 8px;">' . esc_html( $unique_id ) . '</code>'
+                    . '</div>';
             }
-            $msg .= '<div style="font-size:1.5em;font-weight:bolder;margin-bottom:16px;">' . esc_html( $child_name ) . esc_html__( ' Plugin is Activated', 'mainwp-child' ) . '</div>';
-            $msg .= '<div style="font-size:1.2em;margin-bottom:8px">' . esc_html__( 'This site is now ready for connection. Please proceed with the connection process from your ', 'mainwp-child' ) . esc_html( $dashboard_name ) . ' ' . esc_html__( 'to start managing the site. ', 'mainwp-child' ) . '</div>';
-            // translators: 1: Opening link tag, 2: Closing link tag.
-            $doc_link = sprintf( esc_html__( 'If you need assistance, refer to our %1$sdocumentation%2$s.', 'mainwp-child' ), '<a href="https://docs.mainwp.com/getting-started/get-started-with-mainwp#add-a-site-to-your-dashboard" target="_blank">', '</a>' );
-            $msg     .= '<div style="font-size:1.2em;margin-bottom:8px">' . $doc_link . '</div>';
-            if ( ! MainWP_Child_Branding::instance()->is_branding() ) {
-                // translators: 1: Opening link tag, 2: Closing link tag.
-                $settings_link = sprintf( esc_html__( ' %1$splugin settings%2$s. ', 'mainwp-child' ), '<a href="admin.php?page=mainwp_child_tab">', '</a>' );
-                $msg          .= '<div style="font-size:1.2em;">' . esc_html__( 'For additional security options, visit the ', 'mainwp-child' ) . esc_html( $child_name ) . $settings_link . '</div>';
-                $msg .= '<div style="clear:both"></div>';
-            }
+
+            $msg .= '<div style="margin-top:16px;">'
+                . '<a href="' . esc_url( $panel_url ) . '" target="_blank" rel="noopener" class="button button-primary">'
+                . esc_html__( 'Ir a mi cuenta de TutorWP', 'mainwp-child' )
+                . '</a></div>';
+
             $msg .= '</div>';
             echo $msg; //phpcs:ignore -- NOSONAR - ok
         }
