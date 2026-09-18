@@ -7,7 +7,7 @@ Plugin URI: https://tutorwp.cloud
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 6.1.8.9
+Stable tag: 6.1.8.10
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -120,6 +120,12 @@ Please report security bugs found in the source code of the MainWP Child plugin 
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.1.8.10 - 18-9-2026 =
+
+* Fixed: el plugin se presentaba con el nombre del motor a todo usuario nuevo. `get_branding_title()` devolvia cadena vacia cuando el whitelabel del panel no estaba activo, y los seis llamadores se inventaban el mismo respaldo: "MainWP". Como el whitelabel recien se activa AL CONECTAR, funcionaba pero solo a partir del segundo en que dejaba de hacer falta. Ahora devuelve el nombre real del plugin, leido de su encabezado. Corrige de una sola vez el titulo de ajustes, la pestana de conexion, la informacion del servidor y restaurar/clonar. Es el arreglo de raiz que faltaba en 6.1.8.9.
+* Fixed: el aviso que se muestra antes de conectar mostraba el logotipo de MainWP, "MainWP Child Plugin is Activated" y un enlace a docs.mainwp.com. Reemplazado por uno propio, en espanol, apuntando a app.tutorwp.cloud. Ademas muestra el codigo de seguridad listo para copiar cuando el sitio lo tiene activo, para que la conexion no falle con un error que no explica que hacer.
+* Fixed: los correos de alerta 404 y de contacto de soporte salian con asunto "MainWP - ..." y una plantilla HTML enteramente marcada (logotipo, enlaces a mainwp.com, "Hello MainWP User!", "(c) 2013 MainWP"). Estos correos llegan al buzon del cliente final y quedan archivados.
 
 = 6.1.8.9 - 9-4-2026 =
 

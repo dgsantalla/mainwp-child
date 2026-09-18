@@ -12,7 +12,7 @@
  * Author: TutorWP
  * Author URI: https://tutorwp.cloud
  * Text Domain: mainwp-child
- * Version: 6.1.8.9
+ * Version: 6.1.8.10
  * Update URI: https://tutorwp.cloud/conector/
  * Requires at least: 6.2
  * Requires PHP: 7.4
