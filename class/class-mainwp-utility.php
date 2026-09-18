@@ -751,9 +751,17 @@ class MainWP_Utility { //phpcs:ignore -- NOSONAR - multi methods.
                 '<div>REMOTE ADDRESS: ' . $address . '</div>' .
                 '<div>REMOTE IDENTITY: ' . $remote . '</div>' .
                 '<div>USER AGENT: ' . $agent . '</div>';
+        // El asunto llega al buzon del cliente final de la agencia y queda
+        // archivado: es peor que una pantalla, porque no se puede cerrar y no
+        // caduca. Se usa el nombre real del plugin (o la marca del panel, si
+        // hay whitelabel), nunca el del motor.
+        $remitente = MainWP_Child_Branding::instance()->get_branding_title();
+        $remitente = '' !== $remitente ? $remitente : 'TutorWP';
+
         $this->send_wp_mail(
             $email,
-            'MainWP - 404 Alert: ' . $blog,
+            /* translators: 1: nombre de marca, 2: nombre del sitio. */
+            sprintf( __( '%1$s - Alerta 404: %2$s', 'mainwp-child' ), $remitente, $blog ),
             MainWP_Child_Format::format_email( $mail ),
             array(
                 'content-type: text/html',
@@ -774,7 +782,15 @@ class MainWP_Utility { //phpcs:ignore -- NOSONAR - multi methods.
         $email   = $opts['support_email'];
         $sub     = isset( $_POST['mainwp_branding_contact_message_subject'] ) ? wp_kses_post( nl2br( stripslashes( wp_unslash( $_POST['mainwp_branding_contact_message_subject'] ) ) ) ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $from    = isset( $_POST['mainwp_branding_contact_send_from'] ) ? trim( wp_unslash( $_POST['mainwp_branding_contact_send_from'] ) ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $subject = ! empty( $sub ) ? $sub : 'MainWP - Support Contact';
+        // Mismo criterio que la alerta 404: el asunto por defecto no puede
+        // nombrar al motor.
+        $marca   = MainWP_Child_Branding::instance()->get_branding_title();
+        $marca   = '' !== $marca ? $marca : 'TutorWP';
+        $subject = ! empty( $sub ) ? $sub : sprintf(
+            /* translators: %s: nombre de marca. */
+            __( '%s - Contacto de soporte', 'mainwp-child' ),
+            $marca
+        );
         $content = isset( $_POST['mainwp_branding_contact_message_content'] ) ? wp_kses_post( nl2br( stripslashes( wp_unslash( $_POST['mainwp_branding_contact_message_content'] ) ) ) ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $mail    = '';
         $headers = '';
