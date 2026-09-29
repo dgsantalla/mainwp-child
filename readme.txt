@@ -7,7 +7,7 @@ Plugin URI: https://tutorwp.cloud
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 6.1.8.10
+Stable tag: 6.2.0.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -120,6 +120,11 @@ Please report security bugs found in the source code of the MainWP Child plugin 
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.2.0.1 - 29-9-2026 =
+
+* Merged: upstream MainWP Child 6.2, including the signature-reuse security fix (MWP-1691) in class-mainwp-connect.php. All TutorWP changes kept: `maintenance_counts` action, reclaimable table space, brand-free connection notice.
+* Fixed: the new System Monitor notices linked to docs.mainwp.com ("Learn more"). The link is no longer shown.
 
 = 6.1.8.10 - 18-9-2026 =
 
@@ -306,4 +311,3 @@ Please report security bugs found in the source code of the MainWP Child plugin 
 
 [See Video Changelog](https://www.youtube.com/watch?v=5b50tjskwSg)
 
-[See changelog for all versions.](https://mainwp.com/mainwp-child-changelog.txt)

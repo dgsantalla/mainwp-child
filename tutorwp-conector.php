@@ -12,7 +12,7 @@
  * Author: TutorWP
  * Author URI: https://tutorwp.cloud
  * Text Domain: mainwp-child
- * Version: 6.1.8.10
+ * Version: 6.2.0.1
  * Update URI: https://tutorwp.cloud/conector/
  * Requires at least: 6.2
  * Requires PHP: 7.4
@@ -311,4 +311,17 @@ add_action(
 $changes_logs_mod_file = MAINWP_CHILD_PLUGIN_DIR . 'modules' . DIRECTORY_SEPARATOR . 'changes-logs' . DIRECTORY_SEPARATOR . 'changes-logs.php';
 if ( file_exists( $changes_logs_mod_file ) ) {
     include_once $changes_logs_mod_file; // NOSONAR - ok.
+}
+
+if ( file_exists( MAINWP_CHILD_PLUGIN_DIR . 'modules/system-monitor/bootstrap.php' ) ) {
+    define( 'MAINWP_CHILD_SYSTEM_MONITOR_FILE', __FILE__ );
+    require_once MAINWP_CHILD_PLUGIN_DIR . 'modules/system-monitor/bootstrap.php'; // NOSONAR - WP compatible.
+    register_activation_hook(
+        MAINWP_CHILD_SYSTEM_MONITOR_FILE,
+        array( MainWP\Child\SystemMonitor\MainWP_Child_System_Monitor::class, 'activate' )
+    );
+    register_deactivation_hook(
+        MAINWP_CHILD_SYSTEM_MONITOR_FILE,
+        array( MainWP\Child\SystemMonitor\MainWP_Child_System_Monitor::class, 'deactivate' )
+    );
 }

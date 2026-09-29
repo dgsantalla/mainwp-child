@@ -12,7 +12,8 @@ and hooks were left as in the original.
 
 ## Base version
 
-`mainwp-child` **6.1.8** (https://github.com/mainwp/mainwp-child, tag `v6.1.8`).
+`mainwp-child` **6.2** (https://github.com/mainwp/mainwp-child, tag `v6.2`). Originally forked
+from 6.1.8; upstream 6.2 was merged in on 2026-09-29.
 
 ## Changes made by TutorWP on top of the base version
 
@@ -46,6 +47,10 @@ and hooks were left as in the original.
   made conditional (`if ( ! function_exists( ... ) )`) to avoid the fatal at
   all, and a friendly notice + automatic self-deactivation was added for the
   case this plugin loads second.
+- Removed the "Learn more" link to docs.mainwp.com from the System Monitor
+  notices added in upstream 6.2
+  (`modules/system-monitor/class-mainwp-child-system-monitor-issues.php`,
+  `get_help_url()` now returns an empty string).
 
 Full history of these changes, including the reasoning behind each one, is
 kept in the TutorWP project repository
